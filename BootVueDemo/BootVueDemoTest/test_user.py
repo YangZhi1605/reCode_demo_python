@@ -54,6 +54,7 @@ class TestUser(unittest.TestCase):
             self.assertEqual(users[0].name, 'Tom')
             self.assertEqual(users[1].name, 'Jerry')
 
+# 我现在对代码进行了注释的修改，用来测试pycharm是否能够正常提交代码到github
 
 if __name__ == '__main__':
     unittest.main()
