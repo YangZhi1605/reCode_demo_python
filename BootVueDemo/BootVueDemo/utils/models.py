@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import or_
 
 db = SQLAlchemy()
 
@@ -65,3 +66,42 @@ class User(db.Model):
     def save(cls, user):
         db.session.add(user)
         db.session.commit()
+
+    # 根据int类型的id删除用户的类方法
+    @classmethod
+    def delete(cls, id):
+        user = cls.query.get(id)
+        db.session.delete(user)
+        db.session.commit()
+
+    # 根据int类型的id查询一个用户的类方法
+    @classmethod
+    def find_one(cls, id):
+        return cls.query.get(id)
+
+    # 根据int类型的id查询一个用户的类方法
+    @classmethod
+    def update(cls, user):
+        db.session.merge(user)
+        db.session.commit()
+
+    # 根据string类型的name或者string类型的phoneCode进行模糊查询所有用户的类方法
+    # 在这个方法中，cls.name.like('%' + name + '%')和cls.phoneCode.like('%' + phoneCode + '%')是两个查询条件，or_函数会返回满足任一条件的结果。all()方法则是获取所有满足条件的记录。
+    @classmethod
+    def find_by_name_or_phone(cls, name, phoneCode):
+        return cls.query.filter(or_(cls.name.like('%' + name + '%'), cls.phoneCode.like('%' + phoneCode + '%'))).all()
+
+    '''
+    filter函数在SQLAlchemy中用于构建WHERE子句，它接受一或多个条件作为参数，
+    这些条件通常是模型类的属性和值之间的比较。
+    在上面代码中，filter函数用于构建一个查询，该查询会返回满足指定条件的所有记录。
+    filter函数接受了一个or_函数作为参数，
+    or_函数接受两个条件：
+    cls.name.like('%' + name + '%')和cls.phoneCode.like('%' + phoneCode + '%')。
+    这两个条件分别表示name字段和phoneCode字段的值包含指定的字符串。
+    or_函数表示只要满足任一条件，就会返回对应的记录。  
+    all()函数则是获取所有满足条件的记录。
+    如果你想获取满足条件的第一条记录，可以使用first()函数。  
+    所以，cls.query.filter(or_(cls.name.like('%' + name + '%'), cls.phoneCode.like('%' + phoneCode + '%'))).all()
+    这行代码的作用是查询name字段或phoneCode字段的值包含指定字符串的所有记录。
+    '''
