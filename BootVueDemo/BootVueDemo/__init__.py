@@ -5,7 +5,9 @@ from .config.setting import Config
 # 导入utils包下的models模块中的db对象
 from .utils.models import db
 # 导入views包下的primaryRoute模块中的user蓝图对象
-from .views.primaryRoute import user
+from .views.primaryRoute import indexPage
+from .views.user_controller import user_controller
+
 
 
 def create_app():
@@ -18,6 +20,8 @@ def create_app():
     # 初始化migrate
     Migrate(app, db)
     # 注册蓝图
-    app.register_blueprint(user)
+    app.register_blueprint(indexPage, url_prefix='/admin')
+    app.register_blueprint(user_controller, url_prefix='/admin')
+
 
     return app

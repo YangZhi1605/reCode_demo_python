@@ -35,7 +35,8 @@ class User(db.Model):
 
     '''
     __tablename__ = 't_user'
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    # id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(40))
     age = db.Column(db.Integer)
     salary = db.Column(db.Float)
@@ -46,3 +47,21 @@ class User(db.Model):
     @classmethod
     def find_all(cls):
         return cls.query.all()
+
+    # 将查询到的用户数据转换成字典列表并返回JSON。假如不是字典的情况下，因为我自己数据库查询到的结果是字典，所以我直接返回了，
+    # 注意区分__dict__属性和to_dict()方法的区别.后者是我自己写的，一定程度上可以决定我需要暴露哪些字段给前端。
+    # ython 中的每个对象都有一个内置的 __dict__ 属性，它是一个字典，包含了该对象的所有属性和它们的值。你可以直接使用 __dict__ 属性来将对象转换为字典
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'age': self.age,
+            'salary': self.salary,
+            'phoneCode': self.phoneCode
+        }
+
+    # 保存用户的类方法
+    @classmethod
+    def save(cls, user):
+        db.session.add(user)
+        db.session.commit()
