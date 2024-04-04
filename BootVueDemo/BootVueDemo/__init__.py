@@ -7,6 +7,7 @@ from .utils.models import db
 # 导入views包下的primaryRoute模块中的user蓝图对象
 from .views.primaryRoute import indexPage
 from .views.user_controller import user_controller
+from .views.routerTry_controller import routerTry_controller
 
 
 
@@ -22,6 +23,7 @@ def create_app():
     # 注册蓝图
     app.register_blueprint(indexPage, url_prefix='/admin')
     app.register_blueprint(user_controller, url_prefix='/admin')
+    app.register_blueprint(routerTry_controller,url_prefix='/admin')
 
 
     return app
