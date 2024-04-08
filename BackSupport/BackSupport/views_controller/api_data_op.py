@@ -3,6 +3,9 @@ import json
 from flask import send_file
 import os
 from werkzeug.utils import secure_filename
+import pandas as pd
+from ..utils import sqlhelper
+import time
 
 
 # 创建蓝图对象
@@ -48,7 +51,7 @@ def download_template():
         return 'File path is incorrect or file does not exist.'
 
 
-# 创建上传excel文件的接口函数
+# 创建上传excel文件并持久化到数据库的接口函数
 @api_data_op.route('/api/uploadExcel', methods=['POST'])
 def upload_excel():
     print('接收到上传请求')
@@ -74,12 +77,66 @@ def upload_excel():
         filename = secure_filename(uploaded_file.filename)
         file_path = os.path.join(target_folder, filename)
         try:
+            # 保存文件
             uploaded_file.save(file_path)
             print('文件保存成功:', file_path)
+
+
+            # 使用pandas读取Excel文件
+            excel_data = pd.read_excel(file_path,engine='openpyxl')
+            #创建Sqlhelper实例
+            db_helper = sqlhelper.SqlHelper()
+            # 就是持久化到数据库这里有问题
+            # 逐行读取数据，并插入到MySQL数据库（此处假设表名为your_table_name）
+            # for _, row in excel_data.iterrows():
+            #     # 睡眠一秒
+            #     time.sleep(1)
+            #     # 构建插入到device表的SQL语句
+            #     insert_sql = """
+            #     INSERT INTO device1 (InfoType, DeviceNodeID, DeviceName, UserID, CollectTime,
+            #     Voltage1, Voltage2, Voltage3, Voltage4, Voltage5, Voltage6, Voltage7,
+            #     Voltage8, Voltage9, Voltage10, Voltage11, Voltage12, Voltage13, Voltage14,
+            #     Voltage15, Voltage16)
+            #     VALUES (%(InfoType)s, %(DeviceNodeID)s, %(DeviceName)s, %(UserID)s,
+            #     %(CollectTime)s, %(Voltage1)s, %(Voltage2)s, %(Voltage3)s, %(Voltage4)s,
+            #     %(Voltage5)s, %(Voltage6)s, %(Voltage7)s, %(Voltage8)s, %(Voltage9)s,
+            #     %(Voltage10)s, %(Voltage11)s, %(Voltage12)s, %(Voltage13)s, %(Voltage14)s,
+            #     %(Voltage15)s, %(Voltage16)s)
+            #     """
+            #     # 创建一个包含所有要写入的字段值的字典
+            #     # 这里假设DataFrame的列名和数据库的字段名是一致的
+            #     # 如不一致，请根据实际情况更改键名以匹配Excel的列名
+            #     data = {
+            #         'InfoType': row['InfoType'],
+            #         'DeviceNodeID': row['DeviceNodeID'],
+            #         'DeviceName': row['DeviceName'],
+            #         'UserID': row['UserID'],
+            #         'CollectTime': row['CollectTime'],
+            #         'Voltage1': row['Voltage1'],
+            #         'Voltage2': row['Voltage2'],
+            #         # ...继续剩余的电压字段
+            #         'Voltage3': row['Voltage3'],
+            #         'Voltage4': row['Voltage4'],
+            #         'Voltage5': row['Voltage5'],
+            #         'Voltage6': row['Voltage6'],
+            #         'Voltage7': row['Voltage7'],
+            #         'Voltage8': row['Voltage8'],
+            #         'Voltage9': row['Voltage9'],
+            #         'Voltage10': row['Voltage10'],
+            #         'Voltage11': row['Voltage11'],
+            #         'Voltage12': row['Voltage12'],
+            #         'Voltage13': row['Voltage13'],
+            #         'Voltage14': row['Voltage14'],
+            #         'Voltage15': row['Voltage15'],
+            #         'Voltage16': row['Voltage16']
+            #     }
+            #     # 调用def_insert方法，将数据插入到数据库
+            #     # 传入构建好的SQL语句和对应的数据字典
+            #     db_helper.def_insert(insert_sql, *data)
+            return '文件成功上传并存入数据库', 200
         except Exception as e:
-            print('保存文件时出错:', str(e))
-            return 'Error saving file', 500
-        return 'File uploaded successfully', 200
+            print('处理文件或是数据库操作时出错:', str(e))
+            return '处理文件或是数据库操作时出错', 500
     else:
         print('没有接收到文件')
         return 'No file uploaded', 400
@@ -117,3 +174,45 @@ def delete_excel():
     else:
         print('无法获取文件名')
         return 'No filename provided', 400
+
+# 对上传的Excel文件进行整理的逻辑
+@api_data_op.route('/api/organizeExcel', methods=['POST'])
+def organize_excel():
+    print("接收到整理请求")
+    # 获取前端发送的要整理的文件名
+    data = request.json
+    filename = data.get('filename')
+    print(filename)
+    if filename:
+        # 定位文件存储位置的代码与之前相同
+        # 获取当前脚本的绝对路径
+        current_file_path = os.path.abspath(__file__)
+        # 获取 'BackSupport/views_controller' 目录的路径
+        views_controller_dir = os.path.dirname(current_file_path)
+        # 获取 'BackSupport' 目录的路径
+        back_support_dir = os.path.dirname(views_controller_dir)
+
+        # 设置 'BackSupport/resource/front_data_analysis' 为目标文件夹
+        # 目前看到，只能一层一层的join
+        resource_dir = os.path.join(back_support_dir, 'resource')
+        target_folder = os.path.join(resource_dir, 'front_data_analysis')
+
+        filename = secure_filename(filename)
+        file_path = os.path.join(target_folder, filename)
+
+        if os.path.exists(file_path):
+            try:
+                # Specify `engine='openpyxl'` for xlsx files
+                df = pd.read_excel(file_path, engine='openpyxl')
+                # Your data processing logic goes here
+                # df.fillna(方法或值)
+
+                # When saving, also specify `engine='openpyxl'` for xlsx files
+                df.to_excel(file_path, index=False, engine='openpyxl')
+
+                return 'File organized successfully', 200
+            except Exception as e:
+                print('整理文件时出错:', str(e))
+                return 'Error organizing file', 500
+        else:
+            return 'File does not exist', 404
