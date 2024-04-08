@@ -1,7 +1,7 @@
 from flask import Flask
 # 导入蓝图的py文件
-from .views import AdminIndex
-from .views import api_data_lineRace
+from .views_controller import AdminIndex
+from .views_controller import api_data_op
 
 def create_app():
     app = Flask(__name__)
@@ -9,7 +9,7 @@ def create_app():
 
     # 注册蓝图
     app.register_blueprint(AdminIndex.adminIndex)
-    app.register_blueprint(api_data_lineRace.api_data_lineRace)
+    app.register_blueprint(api_data_op.api_data_op)
 
 
     return app
