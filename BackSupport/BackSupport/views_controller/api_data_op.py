@@ -83,3 +83,37 @@ def upload_excel():
     else:
         print('没有接收到文件')
         return 'No file uploaded', 400
+
+# 删除指定文件的逻辑
+@api_data_op.route('/api/deleteExcel', methods=['POST'])
+def delete_excel():
+    # 获取前端发送的要删除的文件名
+    data = request.json
+    filename = data.get('filename')
+    if filename:
+        # 以下部分代码用于定位文件存储位置，与您之前提供的代码相同
+        current_file_path = os.path.abspath(__file__)
+        views_controller_dir = os.path.dirname(current_file_path)
+        back_support_dir = os.path.dirname(views_controller_dir)
+        resource_dir = os.path.join(back_support_dir, 'resource')
+        target_folder = os.path.join(resource_dir, 'front_data_analysis')
+
+        # 安全的获取文件名
+        filename = secure_filename(filename)
+        file_path = os.path.join(target_folder, filename)
+
+        # 删除文件
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                print('文件删除成功:', file_path)
+                return 'File deleted successfully', 200
+            else:
+                print('文件不存在:', file_path)
+                return 'File does not exist', 404
+        except Exception as e:
+            print('删除文件时出错:', str(e))
+            return 'Error deleting file', 500
+    else:
+        print('无法获取文件名')
+        return 'No filename provided', 400
