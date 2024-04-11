@@ -20,8 +20,8 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- ----------------------------
 -- Table structure for device
 -- ----------------------------
-DROP TABLE IF EXISTS `device`;
-CREATE TABLE `device`  (
+DROP TABLE IF EXISTS `device_upload`;
+CREATE TABLE `device_upload`  (
   `ID` int(0) NOT NULL AUTO_INCREMENT,
   `InfoType` int(0) NULL DEFAULT NULL,
   `DeviceNodeID` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
@@ -48,3 +48,6 @@ CREATE TABLE `device`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 654378 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 SET FOREIGN_KEY_CHECKS = 1;
+ALTER TABLE my_table AUTO_INCREMENT = 1;
+
+

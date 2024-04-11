@@ -1,4 +1,5 @@
-from DBUtils.PooledDB import PooledDB # 这个错误是因为你试图调用一个模块，而不是模块中的一个类或者函数。在你的代码中，你试图调用 PooledDB，但是 PooledDB 是一个模块，而不是一个可调用的对象。
+from DBUtils.PooledDB import PooledDB
+# 这个错误是因为你试图调用一个模块，而不是模块中的一个类或者函数。在你的代码中，你试图调用 PooledDB，但是 PooledDB 是一个模块，而不是一个可调用的对象。
 import pymysql
 
 class SqlHelper(object):
@@ -16,7 +17,7 @@ class SqlHelper(object):
             port=3306,
             user='root',
             password='123456',
-            database='back_db',
+            database='graduate',
             charset='utf8'
         )
 

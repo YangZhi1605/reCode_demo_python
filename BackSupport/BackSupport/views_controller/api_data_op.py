@@ -4,16 +4,29 @@ from flask import send_file
 import os
 from werkzeug.utils import secure_filename
 import pandas as pd
-from ..utils import sqlhelper
-import time
+from ..utils import sqlhelper,dbutils
+import time,datetime
+from BackSupport.service_logic.service import Dynamic_Line_Service
+from BackSupport.utils.dbutils import read_data_from_database
+# 导入dao模型
+from BackSupport.model_logic.VoltageModel import Device, Device_Upload
+from BackSupport.service_logic.service import User_Upload_Service
+# 解决跨域请求
+from flask_cors import CORS
+
 
 
 # 创建蓝图对象
 api_data_op = Blueprint('api_data_op', __name__)
-# 定义本地计算机（即服务器中）模板文件的路径
-path_to_excel = 'E:/develops/resource/devicedownload.xls'
+# 加载跨域请求
+CORS(api_data_op)
+# 创建service服务类的对象，将dao模型传入
+data_upload_service = User_Upload_Service(Device_Upload)
 
-# 创建准备传递动态折现图数据的接口函数
+# 定义本地计算机（即服务器中）模板文件的路径
+path_to_excel = 'E:/develops/resource/devicedownload.xlsx'
+
+# 创建准备传递动态折现图数据的接口函数——最初测试版本
 @api_data_op.route('/api/lineRace', methods=['GET'])
 def lineRace():
     # 到resuorce文件夹下找到life-expectancy-table.json文件
@@ -23,7 +36,24 @@ def lineRace():
     # 返回数据,以json格式传递给前端
     return jsonify(data)
 
-# 检查文件是否存在
+# 首页——创建贴合用户的电动汽车数据的动态折线图api接口
+@api_data_op.route('/api/lineData',methods=['GET'])
+def get_dynamic_line_data():
+    service = Dynamic_Line_Service()
+    result = service.get_dict_line_data()
+    return jsonify(result)
+
+# 工作台2——创建AQI数据接口函数
+@api_data_op.route('/api/graphLine', methods=['GET'])
+def graphLine():
+    # 到resuorce文件夹下找到life-expectancy-table.json文件
+    with open('BackSupport/resource/data/aqi-beijing.json', 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    # 返回数据,以json格式传递给前端
+    return jsonify(data)
+
+# 辅助函数——检查文件是否存在
 def def_check():
     # 检查文件是否存在
     file_exists = os.path.exists(path_to_excel)
@@ -39,7 +69,7 @@ def def_check():
     print(result)
     return is_exist
 
-# 创建传递excel模板的接口函数
+# 工作台1——创建下载excel模板的接口函数
 @api_data_op.route('/api/downloadExcel', methods=['GET'])
 def download_template():
     # 假设您的文件位于服务器的指定路径
@@ -51,7 +81,7 @@ def download_template():
         return 'File path is incorrect or file does not exist.'
 
 
-# 创建上传excel文件并持久化到数据库的接口函数
+# 工作台1——创建上传excel文件并持久化到数据库的接口函数
 @api_data_op.route('/api/uploadExcel', methods=['POST'])
 def upload_excel():
     print('接收到上传请求')
@@ -61,9 +91,7 @@ def upload_excel():
     views_controller_dir = os.path.dirname(current_file_path)
     # 获取 'BackSupport' 目录的路径
     back_support_dir = os.path.dirname(views_controller_dir)
-
-    # 设置 'BackSupport/resource/front_data_analysis' 为目标文件夹
-    # 目前看到，只能一层一层的join
+    # 设置 'BackSupport/resource/front_data_analysis' 为目标文件夹# 目前看到，只能一层一层的join
     resource_dir = os.path.join(back_support_dir, 'resource')
     target_folder = os.path.join(resource_dir, 'front_data_analysis')
 
@@ -77,62 +105,15 @@ def upload_excel():
         filename = secure_filename(uploaded_file.filename)
         file_path = os.path.join(target_folder, filename)
         try:
-            # 保存文件
+            # 保存文件 + 存入数据库 的方法调用
             uploaded_file.save(file_path)
             print('文件保存成功:', file_path)
+            # 保存文件到数据库
+            excel_file_path = file_path
+            # 假设希望将Excel文件的数据存储到名为"your_table_name"的数据表中
+            database_table_name = "device_upload"
+            dbutils.save_excel_to_database(excel_file_path, database_table_name)
 
-
-            # 使用pandas读取Excel文件
-            excel_data = pd.read_excel(file_path,engine='openpyxl')
-            #创建Sqlhelper实例
-            db_helper = sqlhelper.SqlHelper()
-            # 就是持久化到数据库这里有问题
-            # 逐行读取数据，并插入到MySQL数据库（此处假设表名为your_table_name）
-            # for _, row in excel_data.iterrows():
-            #     # 睡眠一秒
-            #     time.sleep(1)
-            #     # 构建插入到device表的SQL语句
-            #     insert_sql = """
-            #     INSERT INTO device1 (InfoType, DeviceNodeID, DeviceName, UserID, CollectTime,
-            #     Voltage1, Voltage2, Voltage3, Voltage4, Voltage5, Voltage6, Voltage7,
-            #     Voltage8, Voltage9, Voltage10, Voltage11, Voltage12, Voltage13, Voltage14,
-            #     Voltage15, Voltage16)
-            #     VALUES (%(InfoType)s, %(DeviceNodeID)s, %(DeviceName)s, %(UserID)s,
-            #     %(CollectTime)s, %(Voltage1)s, %(Voltage2)s, %(Voltage3)s, %(Voltage4)s,
-            #     %(Voltage5)s, %(Voltage6)s, %(Voltage7)s, %(Voltage8)s, %(Voltage9)s,
-            #     %(Voltage10)s, %(Voltage11)s, %(Voltage12)s, %(Voltage13)s, %(Voltage14)s,
-            #     %(Voltage15)s, %(Voltage16)s)
-            #     """
-            #     # 创建一个包含所有要写入的字段值的字典
-            #     # 这里假设DataFrame的列名和数据库的字段名是一致的
-            #     # 如不一致，请根据实际情况更改键名以匹配Excel的列名
-            #     data = {
-            #         'InfoType': row['InfoType'],
-            #         'DeviceNodeID': row['DeviceNodeID'],
-            #         'DeviceName': row['DeviceName'],
-            #         'UserID': row['UserID'],
-            #         'CollectTime': row['CollectTime'],
-            #         'Voltage1': row['Voltage1'],
-            #         'Voltage2': row['Voltage2'],
-            #         # ...继续剩余的电压字段
-            #         'Voltage3': row['Voltage3'],
-            #         'Voltage4': row['Voltage4'],
-            #         'Voltage5': row['Voltage5'],
-            #         'Voltage6': row['Voltage6'],
-            #         'Voltage7': row['Voltage7'],
-            #         'Voltage8': row['Voltage8'],
-            #         'Voltage9': row['Voltage9'],
-            #         'Voltage10': row['Voltage10'],
-            #         'Voltage11': row['Voltage11'],
-            #         'Voltage12': row['Voltage12'],
-            #         'Voltage13': row['Voltage13'],
-            #         'Voltage14': row['Voltage14'],
-            #         'Voltage15': row['Voltage15'],
-            #         'Voltage16': row['Voltage16']
-            #     }
-            #     # 调用def_insert方法，将数据插入到数据库
-            #     # 传入构建好的SQL语句和对应的数据字典
-            #     db_helper.def_insert(insert_sql, *data)
             return '文件成功上传并存入数据库', 200
         except Exception as e:
             print('处理文件或是数据库操作时出错:', str(e))
@@ -141,7 +122,7 @@ def upload_excel():
         print('没有接收到文件')
         return 'No file uploaded', 400
 
-# 删除指定文件的逻辑
+# 工作台1——删除指定文件的逻辑
 @api_data_op.route('/api/deleteExcel', methods=['POST'])
 def delete_excel():
     # 获取前端发送的要删除的文件名
@@ -175,7 +156,7 @@ def delete_excel():
         print('无法获取文件名')
         return 'No filename provided', 400
 
-# 对上传的Excel文件进行整理的逻辑
+# 工作台1——对上传的Excel文件进行整理的逻辑
 @api_data_op.route('/api/organizeExcel', methods=['POST'])
 def organize_excel():
     print("接收到整理请求")
@@ -206,13 +187,49 @@ def organize_excel():
                 df = pd.read_excel(file_path, engine='openpyxl')
                 # Your data processing logic goes here
                 # df.fillna(方法或值)
-
                 # When saving, also specify `engine='openpyxl'` for xlsx files
                 df.to_excel(file_path, index=False, engine='openpyxl')
-
                 return 'File organized successfully', 200
             except Exception as e:
                 print('整理文件时出错:', str(e))
                 return 'Error organizing file', 500
         else:
             return 'File does not exist', 404
+
+
+# 工作台1——传递后端数据库中数据表到前台进行表格展示
+@api_data_op.route('/api/getDB_data', methods=['GET'])
+def get_data():
+    # 调用函数读取存储进去的数据库中的数据，返回给前台展示其中的信息
+    data_list = read_data_from_database('device_upload')
+    # 因为原始数据中包含了 datetime.datetime 对象，
+    # 使用 jsonify 之前需要先将这些对象转换成字符串格式，
+    # 因为 JSON 标准不直接支持 datetime 对象。
+    for data in data_list:
+        if isinstance(data['CollectTime'], datetime.datetime):
+            data['CollectTime'] = data[
+                'CollectTime'].isoformat()  # 输出的日期时间格式是 "YYYY-MM-DDTHH:MM:SS" 形式的 ISO 标准字符串
+
+    return jsonify(data_list)
+
+# 根据前台请求，传入的id参数，到数据库中删除对应的数据
+@api_data_op.route('/api/deleteData', methods=['GET'])
+def delete_item():
+    print('进入id删除函数了')
+    # 运用service层写好的根据id删除的方法进行删除.上述中，将dao传入service模型中，即完成了service层的实例化和对dao层的挂载
+    try:
+        # 通过查询字符串获取 item_id
+        item_id = int(request.args.get('id', type=int))
+        print('item_id:', item_id)
+
+        if item_id is None:
+            return jsonify({'message': 'ID parameter is required'}), 400
+        # 调用service层的方法
+        data_upload_service.delete_info(item_id)
+        # 如果没有异常被抛出，则认为删除成功
+        return jsonify({'message': 'Data deleted successfully', 'id': item_id}), 200
+    except Exception as e:
+        # 发生任何异常时返回错误信息和500内部服务器错误状态码
+        return jsonify({'message': 'Deletion failed', 'error': str(e)}), 500
+
+

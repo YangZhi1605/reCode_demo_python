@@ -1,6 +1,7 @@
 import sys
 import os
-# 将 BootVueDemoTest 目录添加到 Python 的模块搜索路径中。你可以在 test_user.py 文件的顶部添加以下代码
+# 将 BootVueDemoTest 目录添加到 Python 的模块搜索路径中。
+# 你可以在 test_user.py 文件的顶部添加以下代码
 # sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 # 你可以在 test_user.py 文件的顶部添加以下代码
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
