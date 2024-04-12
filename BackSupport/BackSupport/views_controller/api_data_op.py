@@ -233,3 +233,75 @@ def delete_item():
         return jsonify({'message': 'Deletion failed', 'error': str(e)}), 500
 
 
+# 根据前台传入的参数，到数据库中进行模糊查询
+@api_data_op.route('/api/searchData', methods=['GET'])
+def search_data():
+    # 获取查询字符串，在前端代码中，您使用了 'query' 作为键来传递搜索字符串
+    search_str = request.args.get('query')
+    print('获取的前台参数：',search_str)
+    # 调用service层的方法
+    results = data_upload_service.search_info(search_str)
+    print('查询结果:', results) # 此时的结果不是一个字典，无法JSON序列化。。查询结果: [<Device(ID=27, DeviceName=电池, UserID=1001, CollectTime=2019-03-13 21:15:41)>, <Device(ID=28, DeviceName=电池, UserID=1001, CollectTime=2019-03-13 21:15:41)>, <Device(ID=29, DeviceName=电池, UserID=1001, CollectTime=2019-03-13 21:15:41)>]
+    # 将查询结果转换为字典列表以便JSON序列化
+    json_results = [
+        {
+            'ID': result.ID,
+            'DeviceNodeID': result.DeviceNodeID,
+            'DeviceName': result.DeviceName,
+            'UserID': result.UserID,
+            'CollectTime': result.CollectTime.strftime('%Y-%m-%d %H:%M:%S') if result.CollectTime else None,
+            'Voltage1':result.Voltage1,
+            'Voltage2':result.Voltage2,
+            'Voltage3':result.Voltage3,
+            'Voltage4':result.Voltage4,
+            'Voltage5':result.Voltage5,
+            'Voltage6':result.Voltage6,
+            'Voltage7':result.Voltage7,
+            'Voltage8':result.Voltage8,
+            'Voltage9':result.Voltage9,
+            'Voltage10':result.Voltage10,
+            'Voltage11':result.Voltage11,
+            'Voltage12':result.Voltage12,
+            'Voltage13':result.Voltage13,
+            'Voltage14':result.Voltage14,
+            'Voltage15':result.Voltage15,
+            'Voltage16':result.Voltage16,
+        } for result in results
+    ]
+    return jsonify(json_results)
+
+# 根据传入的指定id和新数据进行更新数据库信息的接口
+@api_data_op.route('/api/edit_info', methods=['POST'])
+def update_data():
+    # 获取请求中的json数据
+    data = request.get_json()
+    # 获取id
+    id = data.get('Row_id')
+    # 获取新的数据
+    rowData = data.get('editData')
+    # 获取新数据
+    new_data = {
+        'DeviceNodeID': rowData.get('DeviceNodeID'),
+        'DeviceName': rowData.get('DeviceName'),
+        'UserID': rowData.get('UserID'),
+        'CollectTime': rowData.get('CollectTime'),
+        'Voltage1': rowData.get('Voltage1'),
+        'Voltage2': rowData.get('Voltage2'),
+        'Voltage3': rowData.get('Voltage3'),
+        'Voltage4': rowData.get('Voltage4'),
+        'Voltage5': rowData.get('Voltage5'),
+        'Voltage6': rowData.get('Voltage6'),
+        'Voltage7': rowData.get('Voltage7'),
+        'Voltage8': rowData.get('Voltage8'),
+        'Voltage9': rowData.get('Voltage9'),
+        'Voltage10': rowData.get('Voltage10'),
+        'Voltage11': rowData.get('Voltage11'),
+        'Voltage12': rowData.get('Voltage12'),
+        'Voltage13': rowData.get('Voltage13'),
+        'Voltage14': rowData.get('Voltage14'),
+        'Voltage15': rowData.get('Voltage15'),
+        'Voltage16': rowData.get('Voltage16'),
+    }
+    # 调用service层的方法
+    data_upload_service.update_info(id, new_data)
+    return jsonify({'message': 'Data updated successfully', 'id': id}), 200

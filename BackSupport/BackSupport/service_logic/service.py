@@ -36,6 +36,14 @@ class User_Upload_Service:
     def delete_info(self, id: int):
         self.data_dao.delete_info(id)
 
+    #配合SQLAlchemy的Device_Upload模型中的search_info类方法，实现根据传入的字符串进行模糊查询数据库信息的功能
+    def search_info(self, search_str: str):
+        return self.data_dao.search_info(search_str)
+
+    # 配合SQLAlchemy的Device_Upload模型中的update_info，实现根据传入的指定id和新数据进行更新数据库信息的功能
+    def update_info(self, id: int, new_data: dict):
+        self.data_dao.update_info(id, new_data)
+
 
 
 

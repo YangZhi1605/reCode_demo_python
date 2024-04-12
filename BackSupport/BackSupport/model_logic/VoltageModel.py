@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
+from sqlalchemy import cast, String
 
 db = SQLAlchemy()
 
@@ -150,4 +151,62 @@ class Device_Upload(db.Model):
     def delete_info(cls, id):
         device = cls.query.get(id)
         db.session.delete(device)
+        db.session.commit()
+
+    # 根据传入的字符串对设备名和电压数值进行模糊查询的类方法
+    # tips:针对您的情况，由于 Voltage1 到 Voltage16 字段是 Float 类型，
+    # 直接使用 like 方法将引发错误，因为 like 预期的是字符串。
+    # 对于这种情况，可以将 Float 类型的电压值先转换成字符串，
+    # 再使用 like。在SQLAlchemy里，可以用 cast 函数进行类型转换
+    @classmethod
+    def search_info(cls, search_str):
+        return cls.query.filter(or_(
+            cls.DeviceName.like(f'%{search_str}%'),
+            cast(cls.Voltage1, String).like(f'%{search_str}%'),
+            cast(cls.Voltage2, String).like(f'%{search_str}%'),
+            cast(cls.Voltage3, String).like(f'%{search_str}%'),
+            cast(cls.Voltage4, String).like(f'%{search_str}%'),
+            cast(cls.Voltage5, String).like(f'%{search_str}%'),
+            cast(cls.Voltage6, String).like(f'%{search_str}%'),
+            cast(cls.Voltage7, String).like(f'%{search_str}%'),
+            cast(cls.Voltage8, String).like(f'%{search_str}%'),
+            cast(cls.Voltage9, String).like(f'%{search_str}%'),
+            cast(cls.Voltage10, String).like(f'%{search_str}%'),
+            cast(cls.Voltage11, String).like(f'%{search_str}%'),
+            cast(cls.Voltage12, String).like(f'%{search_str}%'),
+            cast(cls.Voltage13, String).like(f'%{search_str}%'),
+            cast(cls.Voltage14, String).like(f'%{search_str}%'),
+            cast(cls.Voltage15, String).like(f'%{search_str}%'),
+            cast(cls.Voltage16, String).like(f'%{search_str}%'),
+            cls.UserID.like(f'%{search_str}%'),
+        )).all()
+
+    # 根据前台传递的ID和数据对象，更新数据库中对应ID的数据的类方法
+    @classmethod
+    def update_info(cls, id, data):
+        # device = cls.query.get(id) 这行代码是用于从数据库中查找并获取具有特定 id 的实体对象。这里 cls 代表类方法中的类本身，在这个场景中，它应该是指代一个定义了数据库映射的模型类。作用在于，它告诉 SQLAlchemy 去数据库中对应表格查询主键值为 id 的行
+        device = cls.query.get(id)
+        # 如果没有查询到对象，返回 None
+        print('得到的device对象是：', device)
+        device.DeviceNodeID = data['DeviceNodeID']
+        device.DeviceName = data['DeviceName']
+        device.UserID = data['UserID']
+        device.CollectTime = data['CollectTime']
+        device.Voltage1 = data['Voltage1']
+        device.Voltage2 = data['Voltage2']
+        device.Voltage3 = data['Voltage3']
+        device.Voltage4 = data['Voltage4']
+        device.Voltage5 = data['Voltage5']
+        device.Voltage6 = data['Voltage6']
+        device.Voltage7 = data['Voltage7']
+        device.Voltage8 = data['Voltage8']
+        device.Voltage9 = data['Voltage9']
+        device.Voltage10 = data['Voltage10']
+        device.Voltage11 = data['Voltage11']
+        device.Voltage12 = data['Voltage12']
+        device.Voltage13 = data['Voltage13']
+        device.Voltage14 = data['Voltage14']
+        device.Voltage15 = data['Voltage15']
+        device.Voltage16 = data['Voltage16']
+        db.session.merge(device)
         db.session.commit()
