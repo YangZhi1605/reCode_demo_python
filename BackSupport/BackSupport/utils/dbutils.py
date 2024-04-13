@@ -55,3 +55,9 @@ def read_data_from_database(table_name):
     finally:
         # 最后不管有没有异常都要关闭连接
         db.close(conn, cursor)
+
+    '''
+    读取数据库的数据结果：
+    {'ID': 1, 'InfoType': 1, 'DeviceNodeID': 'node1', 'DeviceName': 'device_fk', 'UserID': 'user1', 'CollectTime': '2023-07-01T08:31:00', 'Voltage1': 117.57, 'Voltage2': 304.94, 'Voltage3': 232.47, 'Voltage4': 322.6, 'Voltage5': 297.72, 'Voltage6': 329.14, 'Voltage7': 188.24, 'Voltage8': 328.66, 'Voltage9': 362.1, 'Voltage10': 315.87, 'Voltage11': 33.83, 'Voltage12': 319.05, 'Voltage13': 207.17, 'Voltage14': 306.31, 'Voltage15': 131.8, 'Voltage16': 304.1}
+    '''
+

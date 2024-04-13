@@ -17,9 +17,9 @@ from flask_cors import CORS
 
 
 # 创建蓝图对象
-api_data_op = Blueprint('api_data_op', __name__)
+api_data_op_wrben1_3 = Blueprint('api_data_op_wrben1_3', __name__)
 # 加载跨域请求
-CORS(api_data_op)
+CORS(api_data_op_wrben1_3)
 # 创建service服务类的对象，将dao模型传入
 data_upload_service = User_Upload_Service(Device_Upload)
 
@@ -27,7 +27,7 @@ data_upload_service = User_Upload_Service(Device_Upload)
 path_to_excel = 'E:/develops/resource/devicedownload.xlsx'
 
 # 创建准备传递动态折现图数据的接口函数——最初测试版本
-@api_data_op.route('/api/lineRace', methods=['GET'])
+@api_data_op_wrben1_3.route('/api/lineRace', methods=['GET'])
 def lineRace():
     # 到resuorce文件夹下找到life-expectancy-table.json文件
     with open('BackSupport/resource/data/life-expectancy-table.json', 'r', encoding='utf-8') as f:
@@ -37,21 +37,13 @@ def lineRace():
     return jsonify(data)
 
 # 首页——创建贴合用户的电动汽车数据的动态折线图api接口
-@api_data_op.route('/api/lineData',methods=['GET'])
+@api_data_op_wrben1_3.route('/api/lineData',methods=['GET'])
 def get_dynamic_line_data():
     service = Dynamic_Line_Service()
     result = service.get_dict_line_data()
     return jsonify(result)
 
-# 工作台2——创建AQI数据接口函数
-@api_data_op.route('/api/graphLine', methods=['GET'])
-def graphLine():
-    # 到resuorce文件夹下找到life-expectancy-table.json文件
-    with open('BackSupport/resource/data/aqi-beijing.json', 'r', encoding='utf-8') as f:
-        data = json.load(f)
 
-    # 返回数据,以json格式传递给前端
-    return jsonify(data)
 
 # 辅助函数——检查文件是否存在
 def def_check():
@@ -70,7 +62,7 @@ def def_check():
     return is_exist
 
 # 工作台1——创建下载excel模板的接口函数
-@api_data_op.route('/api/downloadExcel', methods=['GET'])
+@api_data_op_wrben1_3.route('/api/downloadExcel', methods=['GET'])
 def download_template():
     # 假设您的文件位于服务器的指定路径
     # path_to_excel = 'E:/develops/resource/devicedownload.xls'
@@ -82,7 +74,7 @@ def download_template():
 
 
 # 工作台1——创建上传excel文件并持久化到数据库的接口函数
-@api_data_op.route('/api/uploadExcel', methods=['POST'])
+@api_data_op_wrben1_3.route('/api/uploadExcel', methods=['POST'])
 def upload_excel():
     print('接收到上传请求')
     # 获取当前脚本的绝对路径
@@ -123,7 +115,7 @@ def upload_excel():
         return 'No file uploaded', 400
 
 # 工作台1——删除指定文件的逻辑
-@api_data_op.route('/api/deleteExcel', methods=['POST'])
+@api_data_op_wrben1_3.route('/api/deleteExcel', methods=['POST'])
 def delete_excel():
     # 获取前端发送的要删除的文件名
     data = request.json
@@ -157,7 +149,7 @@ def delete_excel():
         return 'No filename provided', 400
 
 # 工作台1——对上传的Excel文件进行整理的逻辑
-@api_data_op.route('/api/organizeExcel', methods=['POST'])
+@api_data_op_wrben1_3.route('/api/organizeExcel', methods=['POST'])
 def organize_excel():
     print("接收到整理请求")
     # 获取前端发送的要整理的文件名
@@ -198,7 +190,7 @@ def organize_excel():
 
 
 # 工作台1——传递后端数据库中数据表到前台进行表格展示
-@api_data_op.route('/api/getDB_data', methods=['GET'])
+@api_data_op_wrben1_3.route('/api/getDB_data', methods=['GET'])
 def get_data():
     # 调用函数读取存储进去的数据库中的数据，返回给前台展示其中的信息
     data_list = read_data_from_database('device_upload')
@@ -213,7 +205,7 @@ def get_data():
     return jsonify(data_list)
 
 # 根据前台请求，传入的id参数，到数据库中删除对应的数据
-@api_data_op.route('/api/deleteData', methods=['GET'])
+@api_data_op_wrben1_3.route('/api/deleteData', methods=['GET'])
 def delete_item():
     print('进入id删除函数了')
     # 运用service层写好的根据id删除的方法进行删除.上述中，将dao传入service模型中，即完成了service层的实例化和对dao层的挂载
@@ -234,7 +226,7 @@ def delete_item():
 
 
 # 根据前台传入的参数，到数据库中进行模糊查询
-@api_data_op.route('/api/searchData', methods=['GET'])
+@api_data_op_wrben1_3.route('/api/searchData', methods=['GET'])
 def search_data():
     # 获取查询字符串，在前端代码中，您使用了 'query' 作为键来传递搜索字符串
     search_str = request.args.get('query')
@@ -271,7 +263,7 @@ def search_data():
     return jsonify(json_results)
 
 # 根据传入的指定id和新数据进行更新数据库信息的接口
-@api_data_op.route('/api/edit_info', methods=['POST'])
+@api_data_op_wrben1_3.route('/api/edit_info', methods=['POST'])
 def update_data():
     # 获取请求中的json数据
     data = request.get_json()

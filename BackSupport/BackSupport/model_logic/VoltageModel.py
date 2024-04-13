@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
 from sqlalchemy import cast, String
+from datetime import datetime
 
 db = SQLAlchemy()
 
@@ -209,4 +210,134 @@ class Device_Upload(db.Model):
         device.Voltage15 = data['Voltage15']
         device.Voltage16 = data['Voltage16']
         db.session.merge(device)
+        db.session.commit()
+
+
+# 定义管理电路权限的模型，其sql数据格式如下：
+'''
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for device_circuit_weight
+-- ----------------------------
+DROP TABLE IF EXISTS `device_circuit_weight`;
+CREATE TABLE `device_circuit_weight`  (
+  `DataID` int(0) NOT NULL AUTO_INCREMENT,
+  `RuleName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '某套权重分配规则的名称',
+  `Circuit1` float(40, 4) NULL DEFAULT NULL COMMENT '电路权重',
+  `Circuit2` float(40, 4) NULL DEFAULT NULL,
+  `Circuit3` float(40, 4) NULL DEFAULT NULL,
+  `Circuit4` float(40, 4) NULL DEFAULT NULL,
+  `Circuit5` float(40, 4) NULL DEFAULT NULL,
+  `Circuit6` float(40, 4) NULL DEFAULT NULL,
+  `Circuit7` float(40, 4) NULL DEFAULT NULL,
+  `Circuit8` float(40, 4) NULL DEFAULT NULL,
+  `IsSet` int(0) NULL DEFAULT NULL COMMENT '通过0和1表示是否运用',
+  PRIMARY KEY (`DataID`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+'''
+class Device_Circuit_Weight(db.Model):
+    __tablename__ = 'device_circuit_weight'  # 表名称
+    DataID = Column(Integer, primary_key=True, autoincrement=True)  # 电路权重的唯一ID
+    RuleName= Column(String(255))  # 某套权重分配规则的名称
+    Circuit1 = Column(Float)  # 电路1的权重
+    Circuit2 = Column(Float)  # 电路2的权重
+    Circuit3 = Column(Float)  # 电路3的权重
+    Circuit4 = Column(Float)  # 电路4的权重
+    Circuit5 = Column(Float)  # 电路5的权重
+    Circuit6 = Column(Float)  # 电路6的权重
+    Circuit7 = Column(Float)  # 电路7的权重
+    Circuit8 = Column(Float)  # 电路8的权重
+    IsSet = Column(Integer)  # 通过0和1表示是否运用
+    EditUser = Column(String(50))  # 编辑用户
+    EditTime = Column(DateTime)  # 编辑时间
+
+    # 这个函数定义了实例的字符串表示形式
+    # 当你在Python编写代码时，如果尝试打印一个对象或者在解释器中简单地输入一个对象实例并回车，
+    # Python会调用这个对象的__repr__方法来获得可以显示的字符串。
+    # 目的是为了方便调试和记录日志，提供一个对象的描述性信息。
+    def __repr__(self):
+        return f"<Device_Circuit_Weight(DataID={self.DataID}, RuleName={self.RuleName}, Circuit1={self.Circuit1}, Circuit2={self.Circuit2}, Circuit3={self.Circuit3}, Circuit4={self.Circuit4}, Circuit5={self.Circuit5}, Circuit6={self.Circuit6}, Circuit7={self.Circuit7}, Circuit8={self.Circuit8},IsSet={self.IsSet},EditTime={self.EditTime},EditUser={self.EditUser})>"
+
+    #编写to_dict方法，将模型获取的结果转换为字典返回
+    def to_dict(self):
+        return {
+            'DataID': self.DataID,
+            'RuleName': self.RuleName,
+            'Circuit1': self.Circuit1,
+            'Circuit2': self.Circuit2,
+            'Circuit3': self.Circuit3,
+            'Circuit4': self.Circuit4,
+            'Circuit5': self.Circuit5,
+            'Circuit6': self.Circuit6,
+            'Circuit7': self.Circuit7,
+            'Circuit8': self.Circuit8,
+            'IsSet': self.IsSet,
+            'EditUser': self.EditUser,
+            'EditTime': self.EditTime
+        }
+
+    # 查询所有数据的类方法
+    @classmethod
+    def get_all(cls):
+        return cls.query.all()
+
+    # 编写根据前台传递的ID和对象进行修改的类方法
+    @classmethod
+    def update_info(cls, id, data):
+        device = cls.query.get(id)
+        print('查询到结果：',device)
+        print('前台拿到的内容：',id,data)
+        device.RuleName = data['RuleName']
+        device.Circuit1 = data['Circuit1']
+        device.Circuit2 = data['Circuit2']
+        device.Circuit3 = data['Circuit3']
+        device.Circuit4 = data['Circuit4']
+        device.Circuit5 = data['Circuit5']
+        device.Circuit6 = data['Circuit6']
+        device.Circuit7 = data['Circuit7']
+        device.Circuit8 = data['Circuit8']
+        device.IsSet = data['IsSet']
+        device.EditUser = data['EditUser']
+        # 让修改时间设置为当前的时间
+        device.EditTime = datetime.utcnow()  # 如果数据库中以UTC时间存储，这里就不需要转换了
+        db.session.merge(device)
+        db.session.commit()
+
+    # 编写根据前台传递的对象进行添加的类方法
+    @classmethod
+    def add_info(cls, data):
+
+        new_device = cls(
+            RuleName=data['RuleName'],
+            Circuit1=data['Circuit1'],
+            Circuit2=data['Circuit2'],
+            Circuit3=data['Circuit3'],
+            Circuit4=data['Circuit4'],
+            Circuit5=data['Circuit5'],
+            Circuit6=data['Circuit6'],
+            Circuit7=data['Circuit7'],
+            Circuit8=data['Circuit8'],
+            IsSet=data['IsSet'],
+            EditUser=data['EditUser'],
+            # 要调用时间模块，将时间转换为MYSQL的datetime格式
+            EditTime = datetime.strptime(data['EditTime'], '%Y-%m-%dT%H:%M:%S.%fZ')  # 转换为datetime对象
+        )
+        db.session.add(new_device)
+        db.session.commit()
+
+    # 根据前台传递的'规则名称'和'修改者名称'两个参数进行模糊查询的类方法
+    @classmethod
+    def search_info(cls, search_str):
+        return cls.query.filter(or_(
+            cls.RuleName.like(f'%{search_str}%'),
+            cls.EditUser.like(f'%{search_str}%')
+        )).all()
+
+    # 根据前台传递的DataID进行删除的类方法
+    @classmethod
+    def delete_info(cls, id):
+        device = cls.query.get(id)
+        db.session.delete(device)
         db.session.commit()

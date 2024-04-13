@@ -46,4 +46,29 @@ class User_Upload_Service:
 
 
 
+# 服务于后台管理修改电路分配权限占比的服务类
+class Circuit_Weight_Service:
+    def __init__(self, data_dao):
+        self.data_dao = data_dao
+
+    # 配合SQLAlchemy的Device_Circuit_Weight模型中的get_all类方法，实现获取所有数据的功能
+    def get_all(self):
+        return self.data_dao.get_all()
+
+    # 配合SQLAlchemy的Device_Circuit_Weight模型中的update_info类方法，实现根据传入的指定id和新数据进行更新数据库信息的功能
+    def update_info(self, id: int, new_data: dict):
+        self.data_dao.update_info(id, new_data)
+
+    # 配合SQLAlchemy的Device_Circuit_Weight模型中的delete_info类方法，实现根据int类型的id删除数据库信息的功能
+    def delete_info(self, id: int):
+        self.data_dao.delete_info(id)
+
+    # 配合SQLAlchemy的Device_Circuit_Weight模型中的add_info类方法，实现根据传入的新数据添加数据库信息的功能
+    # 在service层调用dao层的add_info类方法的写法看起来是正确的。我的service层方法会接收一个字典，然后将这个字典直接传递给dao层的add_info方法。
+    def add_info(self, new_data: dict):
+        self.data_dao.add_info(new_data)
+
+    # 配合SQLAlchemy的Device_Circuit_Weight模型中的search_info类方法，实现根据传入的字符串进行模糊查询数据库信息的功能
+    def search_info(self, search_str: str):
+        return self.data_dao.search_info(search_str)
 
