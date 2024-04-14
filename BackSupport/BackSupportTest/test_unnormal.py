@@ -3,6 +3,10 @@ from BackSupport.model_logic.VoltageModel import db, Device,Device_Circuit_Weigh
 from BackSupport.utils.dbutils import read_data_from_database
 import datetime
 
+from BackSupport.utils.wrben2_utils import get_input_voltages, cal_diff_voltages, count_diff_voltages_all, \
+    count_diff_voltages_single, format_terminal_data, single_count_dict_in_list, get_top_five_values
+
+
 # 你可以把这部分代码放到一个函数中，而不是在模块层级执行
 def print_odd_voltages():
     app = create_app()
@@ -33,8 +37,74 @@ def print_weight():
         for result in results:
             print(result)
 
+# 测试wrben2_utils.py文件中，get_input_voltages方法能够获取到奇数位的电压值
+def test_get_input_voltages():
+    app = create_app()
+    with app.app_context():
+        input_voltages = get_input_voltages()
+        for voltages in input_voltages:
+            print(voltages)
+
+# 测试wrben2_utils文件中，计算相邻两个输入电压之间的差值
+def test_cal_diff_voltage():
+    app = create_app()
+    with app.app_context():
+        # 统计差值个数
+        cnt = 0
+        input_voltages = get_input_voltages()
+        res_total = cal_diff_voltages(input_voltages)
+        for item in res_total:
+            print(item)
+            cnt += len(item)
+        print('被作差的个数有',cnt)
+
+# 测试count_diff_voltages函数
+def test_count_diff_voltages_all():
+    app = create_app()
+    with app.app_context():
+        input_voltages = get_input_voltages()
+        diff_voltages = cal_diff_voltages(input_voltages)
+        print('八条路全部计算，各个阶段结果：',count_diff_voltages_all(diff_voltages))
+
+# 测试count_diff_voltages_single函数
+def test_count_diff_voltages_single():
+    app = create_app()
+    with app.app_context():
+        input_voltages = get_input_voltages()
+        diff_voltages = cal_diff_voltages(input_voltages)
+        for i in range(0,len(diff_voltages)):
+            print(f'第{i+1}路，各个阶段结果：',count_diff_voltages_single(diff_voltages[i]))
+
+# 测试获得每条路的'200-300'的数据字典
+def test_get_200_300():
+    app = create_app()
+    with app.app_context():
+        # 获得统计过每一列数据的各个阶段数量的字典列表
+        count_diffs_dict_in_list = single_count_dict_in_list()
+        formatted_results = format_terminal_data(count_diffs_dict_in_list)
+        print(formatted_results)
+        # 获取Top5
+        top_five = get_top_five_values(formatted_results)
+        for item in top_five:
+            print('得到的结果：',item)
+
+
+# 测试single_count_dict_in_list函数的返回值
+def test_single_count_dict_in_list():
+    app = create_app()
+    with app.app_context():
+        count_diffs_dict_in_list = single_count_dict_in_list()
+        print(count_diffs_dict_in_list)
+
+
 # 然后在你想打印变量的时候调用这个函数
 if __name__ == '__main__':
     # print_odd_voltages()
-    print_data_device()
+    # print_data_device()
     # print_weight()
+    # test_get_input_voltages()
+    # test_cal_diff_voltage()
+    # test_count_diff_voltages_all()
+    # test_count_diff_voltages_single()
+    # test_single_count_dict_in_list()
+    test_get_200_300()
