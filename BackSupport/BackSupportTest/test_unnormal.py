@@ -4,7 +4,8 @@ from BackSupport.utils.dbutils import read_data_from_database
 import datetime
 
 from BackSupport.utils.wrben2_utils import get_input_voltages, cal_diff_voltages, count_diff_voltages_all, \
-    count_diff_voltages_single, format_terminal_data, single_count_dict_in_list, get_top_five_values
+    count_diff_voltages_single, format_terminal_data, single_count_dict_in_list, get_top_five_values, \
+    get_output_voltages, cal_statistics, standardize_statistics_func
 
 
 # 你可以把这部分代码放到一个函数中，而不是在模块层级执行
@@ -25,9 +26,6 @@ def print_data_device():
                 'CollectTime'].isoformat()  # 输出的日期时间格式是 "YYYY-MM-DDTHH:MM:SS" 形式的 ISO 标准字符串
 
     print(data_list)
-    # 在列表中，以字典的形式存储了数据库中的数据
-    # [{'ID': 1, 'InfoType': 2, 'DeviceNodeID': 'node1', 'DeviceName': '电动机', 'UserID': '1001', 'CollectTime': datetime.datetime(2019, 3, 13, 21, 15, 41), 'Voltage1': 2.21, 'Voltage2': 1.89, 'Voltage3': 3.45, 'Voltage4': 2.78, 'Voltage5': 3.67, 'Voltage6': 1.45, 'Voltage7': 2.9, 'Voltage8': 2.22, 'Voltage9': 1.78, 'Voltage10': 2.67, 'Voltage11': 1.34, 'Voltage12': 2.89, 'Voltage13': 2.24, 'Voltage14': 1.92, 'Voltage15': 5.91, 'Voltage16': 4.32}, {'ID': 2, 'InfoType': 2, 'DeviceNodeID': 'node1', 'DeviceName': '电动机', 'UserID': '1001', 'CollectTime': datetime.datetime(2019, 3, 13, 21, 15, 41), 'Voltage1': 2.21, 'Voltage2': 1.89, 'Voltage3': 3.45, 'Voltage4': 2.78, 'Voltage5': 3.67, 'Voltage6': 1.45, 'Voltage7': 2.9, 'Voltage8': 2.22, 'Voltage9': 1.78, 'Voltage10': 2.67, 'Voltage11': 1.34, 'Voltage12': 2.89, 'Voltage13': 2.24, 'Voltage14': 1.92, 'Voltage15': 5.91, 'Voltage16': 4.32}, {'ID': 3, 'InfoType': 2, 'DeviceNodeID': 'node1', 'DeviceName': '电动机', 'UserID': '1001', 'CollectTime': datetime.datetime(2019, 3, 13, 21, 15, 41), 'Voltage1': 2.21, 'Voltage2': 1.89, 'Voltage3': 3.45, 'Voltage4': 2.78, 'Voltage5': 3.67, 'Voltage6': 1.45, 'Voltage7': 2.9, 'Voltage8': 2.22, 'Voltage9': 1.78, 'Voltage10': 2.67, 'Voltage11': 1.34, 'Voltage12': 2.89, 'Voltage13': 2.24, 'Voltage14': 1.92, 'Voltage15': 5.91, 'Voltage16': 4.32}, {'ID': 4, 'InfoType': 2, 'DeviceNodeID': 'node2', 'DeviceName': '电动机', 'UserID': '1001', 'CollectTime': datetime.datetime(2019, 3, 13, 21, 15, 41), 'Voltage1': 2.21, 'Voltage2': 1.89, 'Voltage3': 3.45, 'Voltage4': 2.78, 'Voltage5': 3.67, 'Voltage6': 1.45, 'Voltage7': 2.9, 'Voltage8': 2.22, 'Voltage9': 1.78, 'Voltage10': 2.67, 'Voltage11': 1.34, 'Voltage12': 2.89, 'Voltage13': 2.24, 'Voltage14': 1.92, 'Voltage15': 5.91, 'Voltage16': 4.32}, {'ID': 5, 'InfoType': 2, 'DeviceNodeID': 'node1', 'DeviceName': '电动机', 'UserID': '1001', 'CollectTime': datetime.datetime(2019, 3, 13, 21, 15, 41), 'Voltage1': 2.21, 'Voltage2': 1.89, 'Voltage3': 3.45, 'Voltage4': 2.78, 'Voltage5': 3.67, 'Voltage6': 1.45, 'Voltage7': 2.9, 'Voltage8': 2.22, 'Voltage9': 1.78, 'Voltage10': 2.67, 'Voltage11': 1.34, 'Voltage12': 2.89, 'Voltage13': 2.24, 'Voltage14': 1.92, 'Voltage15': 5.91, 'Voltage16': 4.32}, {'ID': 6, 'InfoType': 2, 'DeviceNodeID': 'node2', 'DeviceName': '电动机', 'UserID': '1001', 'CollectTime': datetime.datetime(2019, 3, 13, 21, 15, 41), 'Voltage1': 2.21, 'Voltage2': 1.89, 'Voltage3': 3.45, 'Voltage4': 2.78, 'Voltage5': 3.67, 'Voltage6': 1.45, 'Voltage7': 2.9, 'Voltage8': 2.22, 'Voltage9': 1.78, 'Voltage10': 2.67, 'Voltage11': 1.34, 'Voltage12': 2.89, 'Voltage13': 2.24, 'Voltage14': 1.92, 'Voltage15': 5.91, 'Voltage16': 4.32}, {'ID': 7, 'InfoType': 2, 'DeviceNodeID': 'node1', 'DeviceName': '电动机', 'UserID': '1001', 'CollectTime': datetime.datetime(2019, 3, 13, 21, 15, 41), 'Voltage1': 2.21, 'Voltage2': 1.89, 'Voltage3': 3.45, 'Voltage4': 2.78, 'Voltage5': 3.67, 'Voltage6': 1.45, 'Voltage7': 2.9, 'Voltage8': 2.22, 'Voltage9': 1.78, 'Voltage10': 2.67, 'Voltage11': 1.34, 'Voltage12': 2.89, 'Voltage13': 2.24, 'Voltage14': 1.92, 'Voltage15': 5.91, 'Voltage16': 4.32}, {'ID': 8, 'InfoType': 2, 'DeviceNodeID': 'node2', 'DeviceName': '电动机', 'UserID': '1001', 'CollectTime': datetime.datetime(2019, 3, 13, 21, 15, 41), 'Voltage1': 2.21, 'Voltage2': 1.89, 'Voltage3': 3.45, 'Voltage4': 2.78, 'Voltage5': 3.67, 'Voltage6': 1.45, 'Voltage7': 2.9, 'Voltage8': 2.22, 'Voltage9': 1.78, 'Voltage10': 2.67, 'Voltage11': 1.34, 'Voltage12': 2.89, 'Voltage13': 2.24, 'Voltage14': 1.92, 'Voltage15': 5.91, 'Voltage16': 4.32}, {'ID': 9, 'InfoType': 2, 'DeviceNodeID': 'node1', 'DeviceName': '电动机', 'UserID': '1001', 'CollectTime': datetime.datetime(2019, 3, 13, 21, 15, 41), 'Voltage1': 2.21, 'Voltage2': 1.89, 'Voltage3': 3.45, 'Voltage4': 2.78, 'Voltage5': 3.67, 'Voltage6': 1.45, 'Voltage7': 2.9, 'Voltage8': 2.22, 'Voltage9': 1.78, 'Voltage10': 2.67, 'Voltage11': 1.34, 'Voltage12': 2.89, 'Voltage13': 2.24, 'Voltage14': 1.92, 'Voltage15': 5.91, 'Voltage16': 4.32}, {'ID': 10, 'InfoType': 2, 'DeviceNodeID': 'node2', 'DeviceName': '电动机', 'UserID': '1001', 'CollectTime': datetime.datetime(2019, 3, 13, 21, 15, 41), 'Voltage1': 2.21, 'Voltage2': 1.89, 'Voltage3': 3.45, 'Voltage4': 2.78, 'Voltage5': 3.67, 'Voltage6': 1.45, 'Voltage7': 2.9, 'Voltage8': 2.22, 'Voltage9': 1.78, 'Voltage10': 2.67, 'Voltage11': 1.34, 'Voltage12': 2.89, 'Voltage13': 2.24, 'Voltage14': 1.92, 'Voltage15': 5.91, 'Voltage16': 4.32}, {'ID': 11, 'InfoType': 2, 'DeviceNodeID': 'node1', 'DeviceName': '电动机', 'UserID': '1001', 'CollectTime': datetime.datetime(2019, 3, 13, 21, 15, 41), 'Voltage1': 2.21, 'Voltage2': 1.89, 'Voltage3': 3.45, 'Voltage4': 2.78, 'Voltage5': 3.67, 'Voltage6': 1.45, 'Voltage7': 2.9, 'Voltage8': 2.22, 'Voltage9': 1.78, 'Voltage10': 2.67, 'Voltage11': 1.34, 'Voltage12': 2.89, 'Voltage13': 2.24, 'Voltage14': 1.92, 'Voltage15': 5.91, 'Voltage16': 4.32}, {'ID': 12, 'InfoType': 2, 'DeviceNodeID': 'node2', 'DeviceName': '电动机', 'UserID': '1001', 'CollectTime': datetime.datetime(2019, 3, 13, 21, 15, 41), 'Voltage1': 2.21, 'Voltage2': 1.89, 'Voltage3': 3.45, 'Voltage4': 2.78, 'Voltage5': 3.67, 'Voltage6': 1.45, 'Voltage7': 2.9, 'Voltage8': 2.22, 'Voltage9': 1.78, 'Voltage10': 2.67, 'Voltage11': 1.34, 'Voltage12': 2.89, 'Voltage13': 2.24, 'Voltage14': 1.92, 'Voltage15': 5.91, 'Voltage16': 4.32}, {'ID': 13, 'InfoType': 2, 'DeviceNodeID': 'node1', 'DeviceName': '电动机', 'UserID': '1001', 'CollectTime': datetime.datetime(2019, 3, 13, 21, 15, 41), 'Voltage1': 2.21, 'Voltage2': 1.89, 'Voltage3': 3.45, 'Voltage4': 2.78, 'Voltage5': 3.67, 'Voltage6': 1.45, 'Voltage7': 2.9, 'Voltage8': 2.22, 'Voltage9': 1.78, 'Voltage10': 2.67, 'Voltage11': 1.34, 'Voltage12': 2.89, 'Voltage13': 2.24, 'Voltage14': 1.92, 'Voltage15': 5.91, 'Voltage16': 4.32}, {'ID': 14, 'InfoType': 2, 'DeviceNodeID': 'node1', 'DeviceName': '电动机', 'UserID': '1001', 'CollectTime': datetime.datetime(2019, 3, 13, 21, 15, 41), 'Voltage1': 2.21, 'Voltage2': 1.89, 'Voltage3': 3.45, 'Voltage4': 2.78, 'Voltage5': 3.67, 'Voltage6': 1.45, 'Voltage7': 2.9, 'Voltage8': 2.22, 'Voltage9': 1.78, 'Voltage10': 2.67, 'Voltage11': 1.34, 'Voltage12': 2.89, 'Voltage13': 2.24, 'Voltage14': 1.92, 'Voltage15': 5.91, 'Voltage16': 4.32}, {'ID': 15, 'InfoType': 2, 'DeviceNodeID': 'node1', 'DeviceName': '电动机', 'UserID': '1001', 'CollectTime': datetime.datetime(2019, 3, 13, 21, 15, 41), 'Voltage1': 2.21, 'Voltage2': 1.89, 'Voltage3': 3.45, 'Voltage4': 2.78, 'Voltage5': 3.67, 'Voltage6': 1.45, 'Voltage7': 2.9, 'Voltage8': 2.22, 'Voltage9': 1.78, 'Voltage10': 2.67, 'Voltage11': 1.34, 'Voltage12': 2.89, 'Voltage13': 2.24, 'Voltage14': 1.92, 'Voltage15': 5.91, 'Voltage16': 4.32}, {'ID': 16, 'InfoType': 2, 'DeviceNodeID': 'node1', 'DeviceName': '电动机', 'UserID': '1001', 'CollectTime': datetime.datetime(2019, 3, 13, 21, 15, 41), 'Voltage1': 2.21, 'Voltage2': 1.89, 'Voltage3': 3.45, 'Voltage4': 2.78, 'Voltage5': 3.67, 'Voltage6': 1.45, 'Voltage7': 2.9, 'Voltage8': 2.22, 'Voltage9': 1.78, 'Voltage10': 2.67, 'Voltage11': 1.34, 'Voltage12': 2.89, 'Voltage13': 2.24, 'Voltage14': 1.92, 'Voltage15': 5.91, 'Voltage16': 4.32}]
-
 
 # 测试Device_Circuit_Weight模型中，获取所有数据的方法
 def print_weight():
@@ -96,6 +94,29 @@ def test_single_count_dict_in_list():
         count_diffs_dict_in_list = single_count_dict_in_list()
         print(count_diffs_dict_in_list)
 
+# 测试get_output_voltages函数的返回值
+def test_get_output_voltages():
+    app = create_app()
+    with app.app_context():
+        vol_output_lists = get_output_voltages()
+        print(vol_output_lists)
+
+# 测试cal_statistics函数计算结果
+def test_cal_statistics():
+    app = create_app()
+    with app.app_context():
+        vol_output_lists = get_output_voltages()
+        statistics = cal_statistics(vol_output_lists)
+        print(statistics)
+
+# 测试standardized_statistics标准化的结果
+def test_standardized_statistics():
+    app = create_app()
+    with app.app_context():
+        vol_output_lists = get_output_voltages()
+        statistics = cal_statistics(vol_output_lists)
+        standardized_statistics = standardize_statistics_func(statistics)
+        print(standardized_statistics)
 
 # 然后在你想打印变量的时候调用这个函数
 if __name__ == '__main__':
@@ -107,4 +128,7 @@ if __name__ == '__main__':
     # test_count_diff_voltages_all()
     # test_count_diff_voltages_single()
     # test_single_count_dict_in_list()
-    test_get_200_300()
+    # test_get_200_300()
+    # test_get_output_voltages()
+    # test_cal_statistics()
+    test_standardized_statistics()

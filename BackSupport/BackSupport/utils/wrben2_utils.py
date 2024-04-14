@@ -2,7 +2,9 @@
 import datetime
 import random
 from BackSupport.utils.dbutils import read_data_from_database
+from sklearn.preprocessing import MinMaxScaler
 
+############## 大多数服务于饼状图的函数 ################
 # 计算传递进去的输入电压和输出电压的电压比率
 def cal_voltage_ratio(Vin, Vout):
     return (Vout-Vin) / Vin
@@ -280,3 +282,96 @@ def get_top_five_values(formatted_data):
     # 获取排序后的前五个元素，即'value'最大的五个元素
     top_five = sorted_data[:5]
     return top_five
+
+############## 大多数服务于堆叠图的函数 ################
+# 获取数据库中每列输出电压（Voltage2、Voltage4、Voltage6...）的函数，每列存储到一个列表，最后返回一个包含所有列的列表
+def get_output_voltages():
+    """
+
+    Returns:
+        vol_output_lists
+
+    """
+    # 读取存储电压数据的数据表
+    data = read_data_from_database('device_upload')
+    # 创建8个空列表，对应8个Voltage字段
+    vol_output_lists = [[] for _ in range(8)]
+    # 遍历每行数据，将对应的Voltage数据追加到相应的列表中
+    for item in data:
+        for i in range(8):
+            voltage_key = f'Voltage{i * 2 + 2}'
+            if voltage_key in item:
+                vol_output_lists[i].append(item[voltage_key])
+
+    # 返回这个二维数组
+    return vol_output_lists
+
+# 根据上面返回的二维输出电压列表。计算其中每一个一维列表的平均值、众数、中位数、方差。开四个列表分别存储这些统计结果，最后按照键值对的形式返回，值是每一个统计值统计到的列表
+def cal_statistics(vol_output_lists):
+    """
+
+    Args:
+        vol_output_lists: 传递的二维输出电压列表
+
+    Returns:
+        statistics:统计结果
+
+    """
+    # 结果字典
+    statistics = {
+        'mean': [],
+        'mode': [],
+        'median': [],
+        'variance': [],
+        'abnormal':[]
+
+    }
+    # 遍历每列数据，计算每列数据的平均值、众数、中位数、方差、异常值
+    for vol_output in vol_output_lists:
+        # 计算平均值
+        mean = round(sum(vol_output) / len(vol_output), 2)
+        # 计算众数
+        mode = max(set(vol_output), key=vol_output.count)
+        # 计算中位数
+        median = sorted(vol_output)[len(vol_output) // 2]
+        # 计算方差
+        variance = round(sum((x - mean) ** 2 for x in vol_output) / len(vol_output), 2)
+        # 计算异常值，如果输出电压大于500，则认为是异常值
+        abnormal = len([x for x in vol_output if x > 500])
+        # 将结果存储到字典中
+        statistics['mean'].append(mean)
+        statistics['mode'].append(mode)
+        statistics['median'].append(median)
+        statistics['variance'].append(variance)
+        statistics['abnormal'].append(abnormal)
+    # 返回统计结果
+    return statistics
+
+# 传递上面的统计结果statistics。对每个键中的信息通过pandas进行标准化，然后将标准化后的结果存储到一个列表中，最后返回这个二维列表
+def standardize_statistics_func(statistics):
+    """
+
+    Args:
+        statistics: 传递的统计结果
+
+    Returns:
+        standardized_statistics:标准化后的统计结果
+
+    """
+    # 创建MinMaxScaler对象
+    scaler = MinMaxScaler()
+    # # 将统计结果转换为DataFrame
+    # df = pd.DataFrame(statistics)
+    # # 标准化
+    # standardized_statistics = scaler.fit_transform(df)
+    # 对于每个统计数据列表进行标准化
+    for key in statistics:
+        # 转换为二维数组以符合scaler的输入要求
+        data = [[x] for x in statistics[key]]
+        # 使用MinMaxScaler进行标准化操作
+        scaled_data = scaler.fit_transform(data)
+        # 将标准化后的数据更新回statistics中,保留两位小数
+        statistics[key] = [round(x[0], 3) for x in scaled_data]
+
+    standardized_statistics = statistics
+    return standardized_statistics
