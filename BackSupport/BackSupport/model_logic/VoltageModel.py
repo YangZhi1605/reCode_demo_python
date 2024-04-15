@@ -5,7 +5,8 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
-# 写对应于device_fk的数据模型
+# 写对应于device_fk的数据模型,改成device_upload了。因为两个数据表只是名称不同，功能相同，device_fk用于测试。现在device_upload用于实际数据
+# 但是暂时不改，首页的动态折线图用的device_fk的。然后下面已经有device_upload了。日志整合好以后，重新给它整合下去
 # 我的数据表如下，我需要写对应的数据模型
 '''
 /*
@@ -340,4 +341,101 @@ class Device_Circuit_Weight(db.Model):
     def delete_info(cls, id):
         device = cls.query.get(id)
         db.session.delete(device)
+        db.session.commit()
+
+
+# 定义一个检修日志模型。其数据表结果如下：
+"""
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for devicenode_maintaininfo
+-- ----------------------------
+DROP TABLE IF EXISTS `devicenode_maintaininfo`;
+CREATE TABLE `devicenode_maintaininfo`  (
+  `DeviceNodeID` int(0) NOT NULL AUTO_INCREMENT,
+  `MaintenanceDate` datetime(0) NULL DEFAULT NULL,
+  `MaintenanceUser` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `MaintenanceRport` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '检测建议',
+  `MaintenanceTage` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '是否处理',
+  PRIMARY KEY (`DeviceNodeID`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+SET FOREIGN_KEY_CHECKS = 1;
+ALTER TABLE `devicenode_maintaininfo` AUTO_INCREMENT = 1;
+
+"""
+class DeviceNode_MaintainInfo(db.Model):
+    __tablename__ = 'devicenode_maintaininfo'  # 表名称
+    DeviceNodeID = Column(Integer, primary_key=True, autoincrement=True)  # 设备节点的唯一ID
+    MaintenanceDate = Column(DateTime)  # 检修日期
+    MaintenanceUser = Column(String(255))  # 检修用户
+    MaintenanceRport = Column(String(255))  # 检测建议
+    MaintenanceTage = Column(String(255))  # 是否处理
+
+    # 这个函数定义了实例的字符串表示形式
+    # 当你在Python编写代码时，如果尝试打印一个对象或者在解释器中简单地输入一个对象实例并回车，
+    # Python会调用这个对象的__repr__方法来获得可以显示的字符串。
+    # 目的是为了方便调试和记录日志，提供一个对象的描述性信息。
+    def __repr__(self):
+        return f"<DeviceNode_MaintainInfo(DeviceNodeID={self.DeviceNodeID}, MaintenanceDate={self.MaintenanceDate}, MaintenanceUser={self.MaintenanceUser}, MaintenanceRport={self.MaintenanceRport}, MaintenanceTage={self.MaintenanceTage})>"
+
+    # 编写to_dict方法，将模型获取的结果转换为字典返回
+    def to_dict(self):
+        return {
+            'DeviceNodeID': self.DeviceNodeID,
+            # 'MaintenanceDate': self.MaintenanceDate,
+            # flask 使用了 jsonify 函数来完成这个转换，而 jsonify 在内部使用标准的 json 模块。
+            # json 模块默认无法直接序列化 datetime 对象，
+            # 因此需要提供一个自定义的序列化方法或在对象转换为字典之前，将日期时间对象格式化为字符串。
+            # 但是我们需要数据库中的ISO 8601格式
+            'MaintenanceDate': self.MaintenanceDate.strftime('%Y-%m-%d %H:%M:%S'),
+            'MaintenanceUser': self.MaintenanceUser,
+            'MaintenanceRport': self.MaintenanceRport,
+            'MaintenanceTage': self.MaintenanceTage
+        }
+
+    # 编写根据前台传递的ID和对象进行修改的类方法
+    @classmethod
+    def update_info(cls, id, data):
+        device = cls.query.get(id)
+        device.MaintenanceDate = data['MaintenanceDate']
+        device.MaintenanceUser = data['MaintenanceUser']
+        device.MaintenanceRport = data['MaintenanceRport']
+        device.MaintenanceTage = data['MaintenanceTage']
+        db.session.merge(device)
+        db.session.commit()
+
+    # 获取所有数据的类方法
+    @classmethod
+    def get_all(cls):
+        return cls.query.all()
+
+    # 根据指定id删除数据的类方法
+    @classmethod
+    def delete_info(cls, id):
+        device = cls.query.get(id)
+        db.session.delete(device)
+        db.session.commit()
+
+    # 根据前台输入的信息进行模糊查询的类方法
+    @classmethod
+    def search_info(cls, search_str):
+        return cls.query.filter(or_(
+            cls.MaintenanceUser.like(f'%{search_str}%'),
+            cls.MaintenanceRport.like(f'%{search_str}%'),
+            cls.MaintenanceTage.like(f'%{search_str}%')
+        )).all()
+
+    # 接收前台传来的数据，添加到数据库中的类方法
+    @classmethod
+    def add_info(cls, data):
+        new_device = cls(
+            MaintenanceDate=data['MaintenanceDate'],
+            MaintenanceUser=data['MaintenanceUser'],
+            MaintenanceRport=data['MaintenanceRport'],
+            MaintenanceTage=data['MaintenanceTage']
+        )
+        db.session.add(new_device)
         db.session.commit()

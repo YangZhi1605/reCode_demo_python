@@ -5,7 +5,8 @@ import datetime
 
 from BackSupport.utils.wrben2_utils import get_input_voltages, cal_diff_voltages, count_diff_voltages_all, \
     count_diff_voltages_single, format_terminal_data, single_count_dict_in_list, get_top_five_values, \
-    get_output_voltages, cal_statistics, standardize_statistics_func
+    get_output_voltages, cal_statistics, standardize_statistics_func, report_cal_line_graph_five_levle_suggest, \
+    report_get_top_three_terminal_names, report_statistics, report_all
 
 
 # 你可以把这部分代码放到一个函数中，而不是在模块层级执行
@@ -83,8 +84,10 @@ def test_get_200_300():
         print(formatted_results)
         # 获取Top5
         top_five = get_top_five_values(formatted_results)
+        top_three = report_get_top_three_terminal_names(top_five)
         for item in top_five:
             print('得到的结果：',item)
+        print('您的如下三条接线柱',top_three[0],'和',top_three[1],'和',top_three[2],'的磨损最严重请检修')
 
 
 # 测试single_count_dict_in_list函数的返回值
@@ -108,6 +111,9 @@ def test_cal_statistics():
         vol_output_lists = get_output_voltages()
         statistics = cal_statistics(vol_output_lists)
         print(statistics)
+        # 测试获得评判播报
+        report = report_statistics(statistics)
+        print(report)
 
 # 测试standardized_statistics标准化的结果
 def test_standardized_statistics():
@@ -117,6 +123,21 @@ def test_standardized_statistics():
         statistics = cal_statistics(vol_output_lists)
         standardized_statistics = standardize_statistics_func(statistics)
         print(standardized_statistics)
+
+# 测试动态折线图的评测结果
+def test_dynamic_line():
+    app = create_app()
+    with app.app_context():
+        most_two_level = report_cal_line_graph_five_levle_suggest()
+        print('您的数据中，最多的两个健康状态是',most_two_level[0],'和',most_two_level[1])
+
+
+# 测试report_all
+def test_report_all():
+    app = create_app()
+    with app.app_context():
+        report_total = report_all()
+        print(report_total)
 
 # 然后在你想打印变量的时候调用这个函数
 if __name__ == '__main__':
@@ -131,4 +152,6 @@ if __name__ == '__main__':
     # test_get_200_300()
     # test_get_output_voltages()
     # test_cal_statistics()
-    test_standardized_statistics()
+    # test_standardized_statistics()
+    # test_dynamic_line()
+    test_report_all()

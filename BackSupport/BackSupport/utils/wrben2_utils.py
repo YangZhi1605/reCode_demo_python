@@ -3,8 +3,9 @@ import datetime
 import random
 from BackSupport.utils.dbutils import read_data_from_database
 from sklearn.preprocessing import MinMaxScaler
+import numpy as np
 
-############## 大多数服务于饼状图的函数 ################
+############## 大多数服务于五档状态评判折线图的函数 ################
 # 计算传递进去的输入电压和输出电压的电压比率
 def cal_voltage_ratio(Vin, Vout):
     return (Vout-Vin) / Vin
@@ -49,7 +50,8 @@ def cal_all_voltage_ratios():
     # 返回所有经过加权计算的电压比率
     return all_voltage_ratios
 
-# 拿着上面算出来的每行数据中，8条电路带权重的电压比率，进行加权平均数计算，然后根据加权平均数的值，生成随机数
+# 拿着上面算出来的每行数据中，8条电路带权重的电压比率，进行加权平均数计算，
+# 然后根据加权平均数的值，生成随机数。每行数据都会得到一个健康状态评判。
 def cal_weight_voltage_result_radom():
     # 获取所有电路的电压比率
     all_voltage_ratios = cal_all_voltage_ratios()
@@ -88,7 +90,7 @@ def cal_weight_voltage_result_radom():
 
     # 看看生成结果：
     # print(grade_random)
-    # 要将生成的一维列表 grade_random 转变为您需要的格式，您只需要将列表中的每个元素包装到一个小的列表中，并确保每个小列表的第一个元素是对应的索引转换为字符串
+    # 要将生成的一维列表 grade_random 转变为需要的格式，只需要将列表中的每个元素包装到一个小的列表中，并确保每个小列表的第一个元素是对应的索引转换为字符串
     required_data_format = [[str(i + 1), num] for i, num in enumerate(grade_random)]
     # 返回结果
     # 这将返回如下格式的列表
@@ -100,10 +102,48 @@ def cal_weight_voltage_result_radom():
     # ]
 
     return required_data_format
+# 五档健康折线图状态评判建议
+def report_cal_line_graph_five_levle_suggest():
+    """
 
+    Returns:
+        report_info:返回最多的两种状态的评语
+
+    """
+    # 假设这是一个获取所有电路电压比率的函数
+    all_voltage_ratios = cal_all_voltage_ratios()
+    # 结果列表
+    total_voltage_ratios = []
+    for voltage_ratios in all_voltage_ratios:
+        # 每行数据的电压比率相加后除以权重个数8，结果保留四位小数
+        total_voltage_ratio = round(sum(voltage_ratios)/8, 4)
+        # 存储到结果列表中
+        total_voltage_ratios.append(total_voltage_ratio)
+    # 根据设定的条件统计每个类别的数量
+    health_categories = {"十分健康": 0, "健康": 0, "正常": 0, "轻微严重": 0, "十分严重": 0}
+    for ratio in total_voltage_ratios:
+        if 0.033 <= ratio <= 0.034:
+            health_categories["十分健康"] += 1
+        elif 0.031 <= ratio < 0.033 or 0.034 < ratio <= 0.035:
+            health_categories["健康"] += 1
+        elif 0.029 <= ratio < 0.031 or 0.035 < ratio <= 0.036:
+            health_categories["正常"] += 1
+        elif 0.027 <= ratio < 0.029 or 0.036 < ratio <= 0.0385:
+            health_categories["轻微严重"] += 1
+        else:
+            health_categories["十分严重"] += 1
+
+    # 筛选出数量最多的两种状态
+    sorted_categories = sorted(health_categories.items(), key=lambda item: item[1], reverse=True)[:2]
+    most_two_level = [category[0] for category in sorted_categories]
+    report_info = f'经过分析：您提供的数据中"{most_two_level[0]}"与"{most_two_level[1]}"是主要的健康状态。'
+    return report_info
+
+
+
+############## 大多数服务于接线柱磨损分析饼状图的函数 ################
 
 # 获取数据库中每列输入电压（Voltage1、Voltage3、Voltage5...）的函数，每列存储到一个列表，最后返回一个包含所有列的列表
-
 def get_input_voltages():
     """
 
@@ -283,7 +323,25 @@ def get_top_five_values(formatted_data):
     top_five = sorted_data[:5]
     return top_five
 
-############## 大多数服务于堆叠图的函数 ################
+# 从磨损最严重的五条接线柱中统计出3个接线柱的磨损最严重的接线柱名称
+def report_get_top_three_terminal_names(top_five):
+    """
+
+    Args:
+        top_five: 传递的前五个数据
+
+    Returns:
+        top_three:返回的前三个数据
+        report_info:综合评语
+
+    """
+    # 获取前三个数据的'name'键值，即接线柱名称
+    top_three = [item['name'] for item in top_five[:3]]
+    report_info = f'当前汽车电池接线柱"{top_three[0]}"、"{top_three[1]}"与"{top_three[2]}"磨损最为严重，请及时检修。'
+    return report_info
+
+
+############## 大多数服务于多数据标准判断的堆叠图的函数 ################
 # 获取数据库中每列输出电压（Voltage2、Voltage4、Voltage6...）的函数，每列存储到一个列表，最后返回一个包含所有列的列表
 def get_output_voltages():
     """
@@ -375,3 +433,67 @@ def standardize_statistics_func(statistics):
 
     standardized_statistics = statistics
     return standardized_statistics
+
+
+# 对standardized_statistics，statistics，中平均数、众数、中位数、方差、异常值等信息进行统计汇报
+def report_statistics(statistics):
+    """
+
+    Args:
+        statistics: 五种统计信息
+
+    Returns:
+        report:
+    评判结果没有什么问题，但是我感觉众数的统计不对劲。
+    """
+    report = ''
+    try:
+        # 中位数汇报
+        median_average = np.mean(statistics['median'])
+        report += f'电压的中位数平均值是{median_average:.2f}V;'
+
+        # 出现最多的电压（众数）汇报
+        mode_most_common = max(set(statistics['mode']), key=statistics['mode'].count)
+        report += f'出现最多的电压是{mode_most_common}V;'
+
+        # 均值汇报
+        mean_average = np.mean(statistics['mean'])
+        report += f'电压的均值是{mean_average:.2f}V;'
+
+        # 方差汇报
+        variance_average = np.mean(statistics['variance'])
+        report += f'从方差中可以知道电压值的波动性，平均方差是{variance_average:.2f};'
+
+        # 异常值汇报
+        total_abnormal = sum(statistics['abnormal'])
+        report += f'出现了{total_abnormal}个异常值。'
+    except Exception as e:
+        report += f'计算异常，请检查输入数据。错误信息: {str(e)}'
+
+    return report
+
+############## 大多数服务于动态柱状图函数 ################
+def report_dynamic_bar():
+    report = "动态柱状图的评测结果不错。"
+    return report
+
+############## 大多数服务于仪表盘评分函数 ################
+def report_grade():
+    report = "仪表盘评分的评测结果不错。"
+    return report
+
+# 调用以上五种report_函数，综合每个函数的返回值，给出一个综合评判
+def report_all():
+    """
+
+    Returns:
+        report_total
+
+    """
+    count_diffs_dict_in_list = single_count_dict_in_list()
+    formatted_data = format_terminal_data(count_diffs_dict_in_list)
+    top_five = get_top_five_values(formatted_data)
+    vol_output_lists = get_output_voltages()
+    statistics = cal_statistics(vol_output_lists)
+    report_total = report_cal_line_graph_five_levle_suggest() + report_get_top_three_terminal_names(top_five) + report_statistics(statistics) + report_dynamic_bar() + report_grade()
+    return report_total

@@ -117,9 +117,10 @@ def upload_excel():
 # 工作台1——删除指定文件的逻辑
 @api_data_op_wrben1_3.route('/api/deleteExcel', methods=['POST'])
 def delete_excel():
-    # 获取前端发送的要删除的文件名
+    # 获取前端发送的要删除的文件名 —— post请求是从request.json中获取数据
     data = request.json
     filename = data.get('filename')
+    print('待删除文件',filename)
     if filename:
         # 以下部分代码用于定位文件存储位置，与您之前提供的代码相同
         current_file_path = os.path.abspath(__file__)

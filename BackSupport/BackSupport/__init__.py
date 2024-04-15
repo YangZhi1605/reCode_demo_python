@@ -4,6 +4,7 @@ from .views_controller import AdminIndex
 from .views_controller import api_data_op_wrben1_3
 from .views_controller import api_data_op_wrben2
 from .views_controller import api_admin_data_system
+from .views_controller import api_data_op_maintaininfo
 # 导入的config包下的setting模块中的Config类
 from .config.setting import Config
 # 导入model_logic包下的VoltageModle模块中的db对象
@@ -26,5 +27,6 @@ def create_app():
     app.register_blueprint(api_data_op_wrben1_3.api_data_op_wrben1_3)
     app.register_blueprint(api_data_op_wrben2.api_data_op_wrben2)
     app.register_blueprint(api_admin_data_system.api_admin_data_system)
+    app.register_blueprint(api_data_op_maintaininfo.api_data_op_maintaininfo)
 
     return app
