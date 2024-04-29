@@ -1,7 +1,5 @@
 # 服务层，读取数据库中需要的数据信息并整理返回，controller层可以直接调用从而得到结果，以JSON的形式反馈给前端。
-from BackSupport.model_logic import VoltageModel
-from BackSupport.model_logic.VoltageModel import Device,Device_Upload
-from flask import jsonify
+from BackSupport.model_logic.TotalModel import Device
 import os
 import json
 
@@ -72,7 +70,7 @@ class Circuit_Weight_Service:
     def search_info(self, search_str: str):
         return self.data_dao.search_info(search_str)
 
-# 服务于前台维修日志管理的福利
+# 服务于前台维修日志管理的服务类
 class Repair_Log_Service:
     def __init__(self, data_dao):
         self.data_dao = data_dao

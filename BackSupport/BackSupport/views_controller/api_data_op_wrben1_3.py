@@ -9,7 +9,7 @@ import time,datetime
 from BackSupport.service_logic.service import Dynamic_Line_Service
 from BackSupport.utils.dbutils import read_data_from_database
 # 导入dao模型
-from BackSupport.model_logic.VoltageModel import Device, Device_Upload
+from BackSupport.model_logic.TotalModel import Device, Device_Upload
 from BackSupport.service_logic.service import User_Upload_Service
 # 解决跨域请求
 from flask_cors import CORS

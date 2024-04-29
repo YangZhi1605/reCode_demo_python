@@ -2,8 +2,14 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
 from sqlalchemy import cast, String
 from datetime import datetime
+from sqlalchemy import Column, Integer, String, Float, DateTime
 
 db = SQLAlchemy()
+
+######################################################################################
+#                               电路信息相关模型类                                        #
+#                                                                                    #
+######################################################################################
 
 # 写对应于device_fk的数据模型,改成device_upload了。因为两个数据表只是名称不同，功能相同，device_fk用于测试。现在device_upload用于实际数据
 # 但是暂时不改，首页的动态折线图用的device_fk的。然后下面已经有device_upload了。日志整合好以后，重新给它整合下去
@@ -43,10 +49,6 @@ CREATE TABLE `device1`  (
 SET FOREIGN_KEY_CHECKS = 1;
 
 '''
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, Integer, String, Float, DateTime
-
-db = SQLAlchemy()
 
 # 定义数据模型 —— 用于大量数据的可视化分析
 class Device(db.Model):
@@ -439,3 +441,216 @@ class DeviceNode_MaintainInfo(db.Model):
         )
         db.session.add(new_device)
         db.session.commit()
+
+
+######################################################################################
+#                               机器学习模型类                                        #
+#                                                                                    #
+######################################################################################
+'''
+/*
+-- ----------------------------
+-- Table structure for modelstorage
+-- ----------------------------
+DROP TABLE IF EXISTS `modelstorage`;
+CREATE TABLE `modelstorage`  (
+  `ID` int(0) NOT NULL AUTO_INCREMENT,
+  `CreateTime` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
+  `ModelName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `CreateUser` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `ModelPath` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `IsUse` int(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`ID`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+'''
+# 根据上述数据表，创建模型存储类
+class ModelStorage(db.Model):
+    __tablename__ = 'modelstorage'
+    ID = Column(db.Integer, primary_key=True, autoincrement=True)
+    CreateTime = Column(DateTime)
+    ModelName = Column(db.String(255), nullable=False)
+    CreateUser = Column(db.String(255), nullable=False)
+    ModelPath = Column(db.Text, nullable=False)
+    IsUse = Column(db.Integer, default=True)
+
+    def __repr__(self):
+        return '<ModelStorage %r>' % self.ModelName
+
+
+    # 将对象信息转换为字典
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+    # 编写获取数据表中所有数据的类方法
+    @classmethod
+    def get_all(cls):
+        return cls.query.all()
+
+    # 编写根据前台传递的ID和对象进行修改的类方法
+    @classmethod
+    def update_info(cls, id, data):
+        device = cls.query.get(id)
+        device.ModelName = data['ModelName']
+        device.CreateUser = data['CreateUser']
+        device.ModelPath = data['ModelPath']
+        device.IsUse = data['IsUse']
+        db.session.merge(device)
+        db.session.commit()
+
+    # 根据id删除的类方法
+    @classmethod
+    def delete_info(cls, id):
+        device = cls.query.get(id)
+        db.session.delete(device)
+        db.session.commit()
+
+    # 编写根据提供的数据对象进行添加机器学习模型路径的类方法
+    @classmethod
+    def add_info(cls, data):
+        new_model = cls(
+            ModelName=data['ModelName'],
+            CreateUser=data['CreateUser'],
+            ModelPath=data['ModelPath'],
+            IsUse=data['IsUse'],
+            CreateTime=data['CreateTime']
+        )
+        db.session.add(new_model)
+        db.session.commit()
+
+
+'''
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for admininfo_table
+-- ----------------------------
+DROP TABLE IF EXISTS `admininfo_table`;
+CREATE TABLE `admininfo_table`  (
+  `id` int(0) NOT NULL AUTO_INCREMENT,
+  `username` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `contact` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+'''
+# 我当前的数据表如上，创建一个对应的模型,负责存储管理员信息
+class AdminInfoTable(db.Model):
+    __tablename__ = 'admininfo_table'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String(255))
+    email = Column(String(255))
+    contact = Column(String(255))
+    password = Column(String(255))
+
+    def __repr__(self):
+        return '<AdminInfoTable %r>' % self.username
+
+    # 将对象信息转换为字典
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+    # 编写获取数据表中所有数据的类方法
+    @classmethod
+    def get_all(cls):
+        return cls.query.all()
+
+
+
+    # 根据前台传递的'用户名'和'密码'两个参数进行查询的类方法
+    @classmethod
+    def is_exist(cls, username, password):
+        return cls.query.filter_by(username=username, password=password).first()
+
+    # 根据前台传递的对象进行添加的类方法
+    @classmethod
+    def add_info(cls, data):
+        new_device = cls(
+            username=data['username'],
+            email=data['email'],
+            contact=data['contact'],
+            password=data['password']
+        )
+        db.session.add(new_device)
+        db.session.commit()
+
+'''
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for device_analysis
+-- ----------------------------
+DROP TABLE IF EXISTS `device_analysis`;
+CREATE TABLE `device_analysis`  (
+  `ID` int(0) NOT NULL AUTO_INCREMENT,
+  `InfoType` int(0) NULL DEFAULT NULL,
+  `DeviceNodeID` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `DeviceName` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `UserID` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `CollectTime` datetime(0) NULL DEFAULT NULL,
+  `Voltage1` float NULL DEFAULT NULL,
+  `Voltage2` float NULL DEFAULT NULL,
+  `Voltage3` float NULL DEFAULT NULL,
+  `Voltage4` float NULL DEFAULT NULL,
+  `Voltage5` float NULL DEFAULT NULL,
+  `Voltage6` float NULL DEFAULT NULL,
+  `Voltage7` float NULL DEFAULT NULL,
+  `Voltage8` float NULL DEFAULT NULL,
+  `Voltage9` float NULL DEFAULT NULL,
+  `Voltage10` float NULL DEFAULT NULL,
+  `Voltage11` float NULL DEFAULT NULL,
+  `Voltage12` float NULL DEFAULT NULL,
+  `Voltage13` float NULL DEFAULT NULL,
+  `Voltage14` float NULL DEFAULT NULL,
+  `Voltage15` float NULL DEFAULT NULL,
+  `Voltage16` float NULL DEFAULT NULL,
+  `HealthLevel` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  PRIMARY KEY (`ID`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+'''
+# 根据上述数据表，创建一个模型，负责存储设备分析信息
+class DeviceAnalysis(db.Model):
+    __tablename__ = 'device_analysis'
+    ID = Column(Integer, primary_key=True, autoincrement=True)
+    InfoType = Column(Integer)
+    DeviceNodeID = Column(String(50))
+    DeviceName = Column(String(50))
+    UserID = Column(String(50))
+    CollectTime = Column(DateTime)
+    Voltage1 = Column(Float)
+    Voltage2 = Column(Float)
+    Voltage3 = Column(Float)
+    Voltage4 = Column(Float)
+    Voltage5 = Column(Float)
+    Voltage6 = Column(Float)
+    Voltage7 = Column(Float)
+    Voltage8 = Column(Float)
+    Voltage9 = Column(Float)
+    Voltage10 = Column(Float)
+    Voltage11 = Column(Float)
+    Voltage12 = Column(Float)
+    Voltage13 = Column(Float)
+    Voltage14 = Column(Float)
+    Voltage15 = Column(Float)
+    Voltage16 = Column(Float)
+    HealthLevel = Column(String(50))
+
+    def __repr__(self):
+        return '<DeviceAnalysis %r>' % self.DeviceName
+
+    # 编写获取数据表中所有数据的类方法
+    @classmethod
+    def get_all(cls):
+        return cls.query.all()
+
+    # 将对象信息转换为字典
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+

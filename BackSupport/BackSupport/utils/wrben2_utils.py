@@ -50,7 +50,7 @@ def cal_all_voltage_ratios():
     # 返回所有经过加权计算的电压比率
     return all_voltage_ratios
 
-# 拿着上面算出来的每行数据中，8条电路带权重的电压比率，进行加权平均数计算，
+# 拿着上面算出来的每行数据中，8条电路带权重的电压比率，进行最后的加权平均数计算
 # 然后根据加权平均数的值，生成随机数。每行数据都会得到一个健康状态评判。
 def cal_weight_voltage_result_radom():
     # 获取所有电路的电压比率
@@ -69,7 +69,7 @@ def cal_weight_voltage_result_radom():
         total_voltage_ratios.append(total_voltage_ratio)
     # 读取这个加权计算后的结果，进行随机数赋值
     '''
-            完美：如果0.033<=total_voltage_ratio<=0.034之间，生成0~50的随机数
+            十分健康：如果0.033<=total_voltage_ratio<=0.034之间，生成0~50的随机数
             健康：如果0.031<=total_voltage_ratio<0.033 & 0.034<total_voltage_ratio<=0.035之间，生成50~150的随机数
             正常：如果0.029<=total_voltage_ratio<0.031 & 0.035<total_voltage_ratio<=0.036之间，生成150~200的随机数
             轻微严重：如果0.027<=total_voltage_ratio<0.029 & 0.036<total_voltage_ratio<=0.0385之间，生成200~300的随机数

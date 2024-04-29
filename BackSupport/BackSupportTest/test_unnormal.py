@@ -1,5 +1,6 @@
 from BackSupport import create_app
-from BackSupport.model_logic.VoltageModel import db, Device,Device_Circuit_Weight  # 确保导入Device模型
+from BackSupport.model_logic.TotalModel import db, Device, Device_Circuit_Weight, DeviceAnalysis  # 确保导入Device模型
+from BackSupport.service_logic.service_machine_learn import ServiceMachineLearn_KNN
 from BackSupport.utils.dbutils import read_data_from_database
 import datetime
 
@@ -139,6 +140,28 @@ def test_report_all():
         report_total = report_all()
         print(report_total)
 
+
+# 测试获取健康状态数据表表中的全部数据
+def test_get_all():
+    app = create_app()
+    with app.app_context():
+        results = DeviceAnalysis.get_all()
+        # 得到所有对象
+        for result in results:
+            # 将对象转换为字典
+            result = result.to_dict()
+            print(result)
+
+# 测试服务类中将数据转换为DataFrame
+def test_get_data():
+    app = create_app()
+    with app.app_context():
+        service = ServiceMachineLearn_KNN(DeviceAnalysis)
+        data = service.get_data()
+        # 查看DataFrame的前几行，确保数据正确加载
+        print(data.head())
+
+
 # 然后在你想打印变量的时候调用这个函数
 if __name__ == '__main__':
     # print_odd_voltages()
@@ -154,4 +177,6 @@ if __name__ == '__main__':
     # test_cal_statistics()
     # test_standardized_statistics()
     # test_dynamic_line()
-    test_report_all()
+    # test_report_all()
+    # test_get_all()
+    test_get_data()

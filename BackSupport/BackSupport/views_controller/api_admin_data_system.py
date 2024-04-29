@@ -1,6 +1,6 @@
 from flask import Blueprint,jsonify,request
 from BackSupport.service_logic.service import Dynamic_Line_Service,User_Upload_Service,Circuit_Weight_Service
-from BackSupport.model_logic.VoltageModel import Device,Device_Upload,Device_Circuit_Weight
+from BackSupport.model_logic.TotalModel import Device,Device_Upload,Device_Circuit_Weight
 import os
 import json
 

@@ -3,7 +3,7 @@ import json
 # 导入解决跨域请求
 from flask_cors import CORS
 from BackSupport.service_logic.service import Repair_Log_Service
-from BackSupport.model_logic.VoltageModel import DeviceNode_MaintainInfo
+from BackSupport.model_logic.TotalModel import DeviceNode_MaintainInfo
 import os
 from datetime import datetime  # 从datetime模块导入datetime类
 
@@ -108,6 +108,7 @@ def create_logInfo():
     log_info = {
         'MaintenanceDate': current_time,# 调用此函数的时间
         'MaintenanceRport':report_total,
+        # 严格而言，这里的MaintenanceUser应该是从前台传递当前登录用户的用户名
         'MaintenanceUser':'yangzhi',
         'MaintenanceTage':'未处理',
     }

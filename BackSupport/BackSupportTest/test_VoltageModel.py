@@ -2,7 +2,7 @@ import os
 import sys
 import unittest
 from BackSupport import create_app
-from BackSupport.model_logic.VoltageModel import db, Device  # 确保导入Device模型
+from BackSupport.model_logic.TotalModel import db, Device  # 确保导入Device模型
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 

@@ -5,10 +5,13 @@ from .views_controller import api_data_op_wrben1_3
 from .views_controller import api_data_op_wrben2
 from .views_controller import api_admin_data_system
 from .views_controller import api_data_op_maintaininfo
+from .views_controller import api_admin_machine_manage
+from .views_controller import api_admin_adminUser
+from .views_controller import api_admin_machine_train
 # 导入的config包下的setting模块中的Config类
 from .config.setting import Config
-# 导入model_logic包下的VoltageModle模块中的db对象
-from .model_logic.VoltageModel import db
+# 导入model_logic包下的VoltageModle模块中的db对象,即SQLAlchemy对象是需要在__init__.py中导入并初始化的
+from .model_logic.TotalModel import db
 
 
 def create_app():
@@ -17,7 +20,7 @@ def create_app():
 
     # 加载配置文件
     app.config.from_object(Config)
-    # 初始化db
+    # 初始化db，一个flask应用只能有一个db
     db.init_app(app)
     # 初始化migrate
     # Migrate(app, db)
@@ -28,5 +31,8 @@ def create_app():
     app.register_blueprint(api_data_op_wrben2.api_data_op_wrben2)
     app.register_blueprint(api_admin_data_system.api_admin_data_system)
     app.register_blueprint(api_data_op_maintaininfo.api_data_op_maintaininfo)
+    app.register_blueprint(api_admin_machine_manage.api_admin_machine_manage)
+    app.register_blueprint(api_admin_adminUser.api_admin_adminUser)
+    app.register_blueprint(api_admin_machine_train.api_admin_machine_train)
 
     return app
