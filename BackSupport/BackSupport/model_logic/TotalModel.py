@@ -473,6 +473,7 @@ class ModelStorage(db.Model):
     CreateUser = Column(db.String(255), nullable=False)
     ModelPath = Column(db.Text, nullable=False)
     IsUse = Column(db.Integer, default=True)
+    ModelScore = Column(db.Float, default=0.0)
 
     def __repr__(self):
         return '<ModelStorage %r>' % self.ModelName
@@ -513,7 +514,8 @@ class ModelStorage(db.Model):
             CreateUser=data['CreateUser'],
             ModelPath=data['ModelPath'],
             IsUse=data['IsUse'],
-            CreateTime=data['CreateTime']
+            CreateTime=data['CreateTime'],
+            ModelScore=data['ModelScore']
         )
         db.session.add(new_model)
         db.session.commit()
@@ -652,5 +654,110 @@ class DeviceAnalysis(db.Model):
     # 将对象信息转换为字典
     def to_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+
+'''
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for front_userinfo_table
+-- ----------------------------
+DROP TABLE IF EXISTS `front_userinfo_table`;
+CREATE TABLE `front_userinfo_table`  (
+  `id` int(0) NOT NULL AUTO_INCREMENT,
+  `username` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `phone` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `sex` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `editTime` datetime(0) NULL DEFAULT NULL,
+  `carName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+   `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+SET FOREIGN_KEY_CHECKS = 1;
+ALTER TABLE front_userinfo_table AUTO_INCREMENT = 1;
+
+'''
+# 我当前的数据表如上，创建一个对应的模型,负责存储前台用户信息
+class FrontUserInfoTable(db.Model):
+    __tablename__ = 'front_userinfo_table'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String(255))
+    phone = Column(String(255))
+    sex = Column(String(10))
+    email = Column(String(255))
+    editTime = Column(DateTime)
+    carName = Column(String(255))
+    password = Column(String(255))
+
+    # 编写获取数据表中所有数据的类方法
+    @classmethod
+    def get_all(cls):
+        return cls.query.all()
+
+    # 将对象信息转换为字典
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+    # 根据传入的id删除信息的类方法
+    @classmethod
+    def delete_info(cls, id):
+        try:
+            device = cls.query.get(id)
+            if device is None:  # 检查是否找到了要删除的对象
+                return {'success': False, 'message': '对象不存在。'}
+            db.session.delete(device)
+            db.session.commit()
+            return {'success': True, 'message': '对象删除成功。'}
+        except Exception as e:
+            # 在这里你可以记录异常信息，比如：print(e) 或者使用应用的日志系统
+            return {'success': False, 'message': '删除过程中发生错误。'}
+
+
+    # 根据前台传递的username和phone进行模糊查询的类方法，只要有一个字段匹配即可
+    @classmethod
+    def search_info(cls, search_str):
+        return cls.query.filter(or_(
+            cls.username.like(f'%{search_str}%'),
+            cls.phone.like(f'%{search_str}%')
+        )).all()
+
+    # 根据前台传递的信息进行添加的类方法
+    @classmethod
+    def add_info(cls, data):
+        try:
+            new_user = cls(
+                username=data['username'],
+                phone=data['phone'],
+                email=data['email'],
+                password=data['password'],
+                sex=data['sex'],
+                carName=data['carName'],
+                editTime=data['editTime']  # 如果数据库中以UTC时间存储，这里就不需要转换了
+            )
+            db.session.add(new_user)
+            db.session.commit()
+            return {'success': True, 'message': '用户添加成功。'}
+        except Exception as e:
+            # 在这里你可以记录异常信息，比如：print(e) 或者使用应用的日志系统
+            db.session.rollback()  # 发生异常后回滚
+            return {'success': False, 'message': '添加过程中发生错误。'}
+
+    # 根据前台传递的ID,将密码重置为123456的类方法，做异常处理
+    @classmethod
+    def reset_password(cls, id):
+        try:
+            user = cls.query.get(id)
+            if user is None:  # 检查是否找到了要删除的对象
+                return {'success': False, 'message': '对象不存在。'}
+            user.password = '123456'
+            db.session.merge(user)
+            db.session.commit()
+            return {'success': True, 'message': '密码重置成功。'}
+        except Exception as e:
+            # 在这里你可以记录异常信息，比如：print(e) 或者使用应用的日志系统
+            return {'success': False, 'message': '密码重置过程中发生错误。'}
 
 

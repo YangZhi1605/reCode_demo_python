@@ -1,6 +1,6 @@
 from flask import Blueprint,jsonify,request
 from BackSupport.model_logic.TotalModel import DeviceAnalysis,ModelStorage
-from BackSupport.service_logic.service_machine_learn import ServiceMachineLearn_KNN,ServiceMachineLearn_RF
+from BackSupport.service_logic.service_machine_learn import ServiceMachineLearn_KNN,ServiceMachineLearn_RF,ServiceMachineLearn_SVM
 import time,os
 import pandas as pd
 # 解决跨域请求
@@ -8,6 +8,7 @@ from flask_cors import CORS
 # 创建服务对象，挂载dao模型
 service_machine_learn = ServiceMachineLearn_KNN(DeviceAnalysis)
 service_machine_learn_rf = ServiceMachineLearn_RF(DeviceAnalysis)
+service_machine_learn_svm = ServiceMachineLearn_SVM(DeviceAnalysis)
 # 创建蓝图
 api_admin_machine_train = Blueprint('api_admin_machine_train', __name__)
 CORS(api_admin_machine_train)
@@ -31,7 +32,7 @@ def train_model_KNN():
     le_loaded = service_machine_learn.load_label_encoder(os.path.basename(le_path))
     print(f"LabelEncoder loaded: {le_loaded}") # LabelEncoder加载成功
     # 保存模型并返回模型保存的路径
-    ModelPath = service_machine_learn.save_model(knn_model, filename='model_knn.pkl') # 模型保存成功
+    ModelPath = service_machine_learn.save_model_knn(knn_model, filename='model_knn.pkl') # 模型保存成功
     # 打印评估指标
     print(f"这是模型的精度Accuracy: {accuracy}")
     print(f"这是模型的F1 Score: {f1_score}")
@@ -86,7 +87,7 @@ def load_model_KNN():
         return jsonify({'message': str(e)}), 500  # 返回500内部服务器错误
 
     # 加载指定目录下训练好的模型
-    model = service_machine_learn.load_model(r'BackSupport\resource\machine_learn_model_save\model_knn.pkl')
+    model = service_machine_learn.load_model_knn(r'BackSupport\resource\machine_learn_model_save\model_knn.pkl')
     # 传入模型和数据，进行预测
     predictions_numeric = service_machine_learn.predict(model, data_list_python_to_machien)
     # 使用LabelEncoder进行反向编码
@@ -107,20 +108,63 @@ def train_model_RF():
         # 获取训练数据
         data = service_machine_learn_rf.get_data_rf()
         # 训练模型
-        rf_model,  accuracy, best_score, le = service_machine_learn_rf.train_rf(data)
+        rf_model_best, accuracy, best_score, le = service_machine_learn_rf.train_rf(data)
+        # 保留模型得分为四位小数
+        best_score = round(best_score, 4)
         # 保存LabelEncoder
         le_path = service_machine_learn_rf.save_label_encoder_rf(le) # LabelEncoder保存成功
         le_loaded = service_machine_learn_rf.load_label_encoder_rf(os.path.basename(le_path))
         print(f"LabelEncoder loaded: {le_loaded}") # LabelEncoder加载成功
         # 保存模型并返回模型保存的路径
-        ModelPath = service_machine_learn.save_model(rf_model, filename='model_rf.pkl') # 模型保存成功
+        ModelPath = service_machine_learn_rf.save_model_rf(rf_model_best, filename='model_rf.pkl') # 模型保存成功
         # 编写一个data字典，存储模型名称ModelName,创建者CreateUser,模型路径ModelPath,是否启用IsUse。调用service_machine_learn的add_info方法，将data字典传入
         data = {
             'ModelName': 'RandomForest',
             'CreateUser': 'Admin-yangzhi',
             'ModelPath': ModelPath,
             'IsUse': 0,
-            'CreateTime': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+            'CreateTime': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+            'ModelScore': best_score
+        }
+        ModelStorage.add_info(data)
+        # 延迟1秒
+        time.sleep(1)
+        # 返回JSON数据
+        return jsonify({'message':'success'})
+    except Exception as e:
+        print(e)
+        return jsonify({'message':str(e)}),500
+
+# 编写训练svm模型的接口,做异常处理
+@api_admin_machine_train.route('/api/train_model_SVM',methods=['GET'])
+def train_model_SVM():
+    '''
+        训练SVM模型+保存模型+保存LabelEncoder+存储模型信息到数据库
+    Returns:
+
+    '''
+    # 通过try-except捕获异常
+    try:
+        # 获取训练数据
+        data = service_machine_learn_svm.get_data_svm()
+        # 训练模型
+        svm_model_best, accuracy, best_score, le = service_machine_learn_svm.train_svm(data)
+        # 保留模型得分为四位小数
+        best_score = round(best_score, 4)
+        # 保存LabelEncoder
+        le_path = service_machine_learn_svm.save_label_encoder_svm(le) # LabelEncoder保存成功
+        le_loaded = service_machine_learn_svm.load_label_encoder_svm(os.path.basename(le_path))
+        print(f"SvM_LabelEncoder loaded: {le_loaded}") # LabelEncoder加载成功
+        # 保存模型并返回模型保存的路径
+        ModelPath = service_machine_learn_svm.save_model_svm(svm_model_best, filename='model_svm_cv8.pkl') # 模型保存成功
+        # 编写一个data字典，存储模型名称ModelName,创建者CreateUser,模型路径ModelPath,是否启用IsUse。调用service_machine_learn的add_info方法，将data字典传入
+        data = {
+            'ModelName': 'SVM模型Cv8',
+            'CreateUser': 'Admin-yangzhi',
+            'ModelPath': ModelPath,
+            'IsUse': 0,
+            'CreateTime': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+            'ModelScore': best_score
         }
         ModelStorage.add_info(data)
         # 延迟1秒

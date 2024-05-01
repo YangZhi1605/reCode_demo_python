@@ -1,5 +1,6 @@
 from BackSupport import create_app
-from BackSupport.model_logic.TotalModel import db, Device, Device_Circuit_Weight, DeviceAnalysis  # 确保导入Device模型
+from BackSupport.model_logic.TotalModel import db, Device, Device_Circuit_Weight, DeviceAnalysis,FrontUserInfoTable  # 确保导入Device模型
+from BackSupport.service_logic.service_front_user_info import ServiceFrontUserInfo
 from BackSupport.service_logic.service_machine_learn import ServiceMachineLearn_KNN
 from BackSupport.utils.dbutils import read_data_from_database
 import datetime
@@ -161,6 +162,16 @@ def test_get_data():
         # 查看DataFrame的前几行，确保数据正确加载
         print(data.head())
 
+# 测试服务类中获取前台用户信息的所有数据,将获取结果转换为字典
+def test_get_front_user_info():
+    app = create_app()
+    with app.app_context():
+        service = ServiceFrontUserInfo(FrontUserInfoTable)
+        results = service.get_all()
+        for result in results:
+            result = result.to_dict()
+            print(result)
+
 
 # 然后在你想打印变量的时候调用这个函数
 if __name__ == '__main__':
@@ -179,4 +190,5 @@ if __name__ == '__main__':
     # test_dynamic_line()
     # test_report_all()
     # test_get_all()
-    test_get_data()
+    # test_get_data()
+    test_get_front_user_info()
