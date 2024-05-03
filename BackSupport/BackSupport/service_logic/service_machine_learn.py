@@ -356,8 +356,7 @@ class ServiceMachineLearn_SVM:
         # 筛选出特征值，这次我只用12个特征
 
         feature = data[
-            ["Voltage1", "Voltage2", "Voltage3", "Voltage4", "Voltage5", "Voltage6", "Voltage7", "Voltage8", "Voltage9",
-             "Voltage10", "Voltage15", "Voltage16"]
+            ["Voltage1", "Voltage2", "Voltage3", "Voltage4", "Voltage5", "Voltage6", "Voltage7", "Voltage8", "Voltage13", "Voltage14"]
         ]
         target = data["HealthLevel"]
         # 创建LabelEncoder对象
@@ -376,12 +375,12 @@ class ServiceMachineLearn_SVM:
         # 超参数处理搜一个合适的+交叉验证
         # 设置参数
         param_grid = {
-            'C':[0.001, 0.01, 0.5, 5, 50],
+            'C':[0.001, 0.01, 0.5, 5, 20,50,500],
             'gamma': ['scale', 'auto'],
             'kernel': ['linear', 'rbf', 'poly']
         }
         # 确定交叉验证的次数
-        cv = 8
+        cv = 4
         # 创建GridSearchCV对象
         grid_search = GridSearchCV(estimator=svm, param_grid=param_grid, cv=cv, n_jobs=-1)
         # 训练模型
@@ -412,7 +411,7 @@ class ServiceMachineLearn_SVM:
         return best_estimator, accuracy, best_score,le
 
     # 保存 SVM的LabelEncoder
-    def save_label_encoder_svm(self, le, filename='label_encoder_svm.pkl'):
+    def save_label_encoder_svm(self, le, filename='label_encoder_svm_cv4.pkl'):
         model_directory = os.path.join('BackSupport', 'resource', 'machine_learn_model_save')
         if not os.path.exists(model_directory):
             os.makedirs(model_directory)
@@ -439,7 +438,7 @@ class ServiceMachineLearn_SVM:
     def inverse_transform_labels(self, le, y_pred):
         return le.inverse_transform(y_pred)
     # 保存训练出来的模型
-    def save_model_svm(self, model, filename='model_svm_cv8.pkl'):
+    def save_model_svm(self, model, filename='model_svm_cv4.pkl'):
         # 设置模型保存的目录
         model_directory = os.path.join('BackSupport', 'resource', 'machine_learn_model_save')
         # 检查目录是否存在，如果不存在则创建

@@ -1,8 +1,9 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import or_
+from sqlalchemy import or_, Text
 from sqlalchemy import cast, String
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy.exc import SQLAlchemyError
 
 db = SQLAlchemy()
 
@@ -760,4 +761,164 @@ class FrontUserInfoTable(db.Model):
             # 在这里你可以记录异常信息，比如：print(e) 或者使用应用的日志系统
             return {'success': False, 'message': '密码重置过程中发生错误。'}
 
+    # 根据前台传递的email和password进行查询的类方法,返回查询到的对象，用户名和密码不能为空，提供查询成功和不成功的异常处理
+    @classmethod
+    def is_exist(cls, email, password):
+        # 检查email和password是否为空
+        if not email or not password:
+            raise ValueError("邮箱和密码不能为空")
+
+        try:
+            # 执行数据库查询
+            user = cls.query.filter_by(email=email, password=password).first()
+            if user:
+                return user
+            else:
+                raise ValueError("未找到匹配的用户")
+        except SQLAlchemyError as e:
+            # 处理查询过程中可能出现的异常
+            raise Exception(f"数据库查询失败: {e}")
+
+
+    # 根据前台传递的对象进行添加的类方法，用于注册用户，返回注册成功和不成功的异常处理
+    @classmethod
+    def register(cls, data):
+        # 检查email和password是否为空
+        if not data['email'] or not data['password']:
+            raise ValueError("邮箱和密码不能为空")
+
+        try:
+            new_user = cls(
+                username=data['username'],
+                phone=data['phone'],
+                email=data['email'],
+                password=data['password'],
+                sex=data['sex'],
+                carName=data['carName'],
+                editTime=data['editTime']  # 如果数据库中以UTC时间存储，这里就不需要转换了
+            )
+            db.session.add(new_user)
+            db.session.commit()
+            return new_user
+        except SQLAlchemyError as e:
+            # 处理查询过程中可能出现的异常
+            raise Exception(f"数据库查询失败: {e}")
+
+
+
+'''
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for device_node_store
+-- ----------------------------
+DROP TABLE IF EXISTS `device_node_store`;
+CREATE TABLE `device_node_store`  (
+  `id` int(0) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '零件商品名称',
+  `desc` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '零件商品描述',
+  `price` float(10, 2) NULL DEFAULT NULL COMMENT '零件商品价格',
+  `img` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '零件商品存储路径',
+  `number` int(0) NULL DEFAULT NULL COMMENT '库存数量',
+  `productCompany` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '商品所属公司',
+  `editTime` datetime(0) NULL DEFAULT NULL COMMENT '修改时间',
+  `editUser` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '修改者姓名',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+SET FOREIGN_KEY_CHECKS = 1;
+ALTER TABLE device_node_store AUTO_INCREMENT = 1;
+
+'''
+# 我当前的数据表如上，创建一个对应的模型,负责存储零件商品信息
+class DeviceNodeStore(db.Model):
+    __tablename__ = 'device_node_store'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255))
+    desc = Column(Text)
+    price = Column(Float)
+    img = Column(String(255))
+    number = Column(Integer)
+    productCompany = Column(String(255))
+    editTime = Column(DateTime)
+    editUser = Column(String(255))
+
+
+    # 编写获取数据表中所有数据的类方法
+    @classmethod
+    def get_all(cls):
+        return cls.query.all()
+
+    # 将对象信息转换为字典
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+    # 根据传入的id删除信息的类方法
+    @classmethod
+    def delete_info(cls, id):
+        try:
+            device = cls.query.get(id)
+            if device is None:  # 检查是否找到了要删除的对象
+                return {'success': False, 'message': '对象不存在。'}
+            db.session.delete(device)
+            db.session.commit()
+            return {'success': True, 'message': '对象删除成功。'}
+        except Exception as e:
+            # 在这里你可以记录异常信息，比如：print(e) 或者使用应用的日志系统
+            return {'success': False, 'message': '删除过程中发生错误。'}
+
+    # 根据前台传递的name和productCompany进行模糊查询的类方法
+    @classmethod
+    def search_info(cls, search_str):
+        return cls.query.filter(or_(
+            cls.name.like(f'%{search_str}%'),
+            cls.productCompany.like(f'%{search_str}%')
+        )).all()
+
+    # 根据前台传递的信息进行添加的类方法
+    @classmethod
+    def add_info(cls, data):
+        try:
+            new_device_node = cls(
+                name=data['name'],
+                desc=data['desc'],
+                price=data['price'],
+                img=data['img'],
+                number=data['number'],
+                productCompany=data['productCompany'],
+                editTime=data['editTime'],  # 如果数据库中以UTC时间存储，这里就不需要转换了
+                editUser=data['editUser']
+
+            )
+            db.session.add(new_device_node)
+            db.session.commit()
+            return {'success': True, 'message': '零件商品添加成功。'}
+        except Exception as e:
+            # 在这里你可以记录异常信息，比如：print(e) 或者使用应用的日志系统
+            print(e)  # 将异常信息打印出来
+            db.session.rollback()
+            return {'success': False, 'message': '添加过程中发生错误。'}
+
+    # 根据前台传递的ID和数据对象，更新数据库中对应ID的数据的类方法
+    @classmethod
+    def update_info(cls, id, data):
+        try:
+            device = cls.query.get(id)
+            device.name = data['name']
+            device.desc = data['desc']
+            device.price = data['price']
+            device.img = data['img']
+            device.number = data['number']
+            device.productCompany = data['productCompany']
+            device.editTime = data['editTime']
+            device.editUser = data['editUser']
+            db.session.merge(device)
+            db.session.commit()
+            return {'success': True, 'message': '零件商品更新成功。'}
+        except Exception as e:
+            # 在这里你可以记录异常信息，比如：print(e) 或者使用应用的日志系统
+            print(e)
+            db.session.rollback()
+            return {'success': False, 'message': '更新过程中发生错误。'}
 

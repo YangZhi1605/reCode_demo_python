@@ -156,10 +156,10 @@ def train_model_SVM():
         le_loaded = service_machine_learn_svm.load_label_encoder_svm(os.path.basename(le_path))
         print(f"SvM_LabelEncoder loaded: {le_loaded}") # LabelEncoder加载成功
         # 保存模型并返回模型保存的路径
-        ModelPath = service_machine_learn_svm.save_model_svm(svm_model_best, filename='model_svm_cv8.pkl') # 模型保存成功
+        ModelPath = service_machine_learn_svm.save_model_svm(svm_model_best, filename='model_svm_cv4.pkl') # 模型保存成功
         # 编写一个data字典，存储模型名称ModelName,创建者CreateUser,模型路径ModelPath,是否启用IsUse。调用service_machine_learn的add_info方法，将data字典传入
         data = {
-            'ModelName': 'SVM模型Cv8',
+            'ModelName': 'SVM模型cv4',
             'CreateUser': 'Admin-yangzhi',
             'ModelPath': ModelPath,
             'IsUse': 0,

@@ -26,4 +26,10 @@ class ServiceFrontUserInfo:
     def reset_password(self, id):
         return self.dao.reset_password(id)
 
+    # 配合SQLAlchemy的FrontUserInfoTable模型中的is_exist类方法，实现查询用户是否存在，从而判断能否登录的功能
+    def is_exist(self,  email, password):
+        return self.dao.is_exist(email, password)
 
+    # 配合SQLAlchemy的FrontUserInfoTable模型中的register类方法，实现注册用户的功能
+    def register(self, data):
+        return self.dao.register(data)
