@@ -922,3 +922,146 @@ class DeviceNodeStore(db.Model):
             db.session.rollback()
             return {'success': False, 'message': '更新过程中发生错误。'}
 
+    # 根据前台传递的id，查询指定的数据信息的类方法，做异常处理
+    @classmethod
+    def get_info_by_id(cls, id):
+        try:
+            device = cls.query.get(id)
+            if device is None:
+                return {'success': False, 'message': '对象不存在。'}
+            return {'success': True, 'data': device.to_dict()}
+        except Exception as e:
+            # 在这里你可以记录异常信息，比如：print(e) 或者使用应用的日志系统
+            print(e)
+            return {'success': False, 'message': '查询过程中发生错误。'}
+
+
+'''
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for cart
+-- ----------------------------
+DROP TABLE IF EXISTS `cart`;
+CREATE TABLE `cart`  (
+  `id` int(0) NOT NULL AUTO_INCREMENT,
+  `selected` int(0) NULL DEFAULT NULL COMMENT '表示是否选中',
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL,
+  `price` float(10, 2) NULL DEFAULT NULL,
+  `cartTotalQuantity` int(0) NULL DEFAULT NULL COMMENT '购物车中零件商品的数量',
+  `total` float(10, 2) NULL DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+SET FOREIGN_KEY_CHECKS = 1;
+'''
+# 我当前的数据表如上，创建一个对应的模型,负责存储购物车信息
+class Cart(db.Model):
+    __tablename__ = 'cart'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    selected = Column(Integer)
+    name = Column(String(255))
+    price = Column(Float)
+    cartTotalQuantity = Column(Integer)
+    total = Column(Float)
+
+    # 编写获取数据表中所有数据的类方法
+    @classmethod
+    def get_all(cls):
+        return cls.query.all()
+
+    # 将对象信息转换为字典
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+    # 根据传入的id删除信息的类方法
+    @classmethod
+    def delete_info(cls, id):
+        try:
+            device = cls.query.get(id)
+            if device is None:  # 检查是否找到了要删除的对象
+                return {'success': False, 'message': '对象不存在。'}
+            db.session.delete(device)
+            db.session.commit()
+            return {'success': True, 'message': '对象删除成功。'}
+        except Exception as e:
+            # 在这里你可以记录异常信息，比如：print(e) 或者使用应用的日志系统
+            return {'success': False, 'message': '删除过程中发生错误。'}
+
+
+    # 根据前台传递的name进行模糊查询的类方法
+    @classmethod
+    def search_info(cls, search_str):
+        return cls.query.filter(cls.name.like(f'%{search_str}%')).all()
+
+
+    # 根据前台传递的信息进行添加的类方法，添加前判断是否已经存在，存在则数量加上前台传递的数量，不存在则添加，做异常处理
+    @classmethod
+    def add_info(cls, data):
+        try:
+            # 查询是否已经存在该商品
+            device = cls.query.filter_by(name=data['name']).first()
+            if device:
+                # 前台传递的是quantity
+                device.cartTotalQuantity += data['quantity']
+                device.total += data['total']
+                db.session.merge(device)
+                db.session.commit()
+                return {'success': True, 'message': '购物车商品添加成功。'}
+            else:
+                new_device = cls(
+                    selected=data['selected'],
+                    name=data['name'],
+                    price=data['price'],
+                    cartTotalQuantity=data['quantity'],
+                    total=data['total']
+                )
+                db.session.add(new_device)
+                db.session.commit()
+                return {'success': True, 'message': '购物车商品添加成功。'}
+        except Exception as e:
+            # 在这里你可以记录异常信息，比如：print(e) 或者使用应用的日志系统
+            print(e)  # 将异常信息打印出来
+            db.session.rollback()
+            return {'success': False, 'message': '添加过程中发生错误。'}
+
+    # 编写根据传入的id更新数量和依据数量计算总价的类方法
+    @classmethod
+    def update_info(cls, id, data):
+        try:
+            device = cls.query.get(id)
+            # 更新数量
+            device.cartTotalQuantity = data['cartTotalQuantity']
+            # 计算新的总价：单价 * 数量
+            device.total = device.price * data['cartTotalQuantity']
+            db.session.merge(device)
+            db.session.commit()
+            return {'success': True, 'message': '购物车商品更新成功。'}
+        except Exception as e:
+            # 在这里你可以记录异常信息，比如：print(e) 或者使用应用的日志系统
+            print(e)
+            db.session.rollback()
+            return {'success': False, 'message': '更新过程中发生错误。'}
+
+    # 个方法将接收一个字典数组，每个字典包含商品ID和对应的选中状态（0或1）。然后，我们将迭代这些数据，更新每一项的 selected 字段，并提交到数据库中。
+    @classmethod
+    def update_selected_status(cls, items):
+        try:
+            # items 应该是一个字典数组，每个字典包含'id'和'selected'
+            for item in items:
+                # 根据id找到对应的购物车条目
+                cart_item = cls.query.get(item['id'])
+                if cart_item:
+                    # 更新selected状态
+                    cart_item.selected = item['selected']
+                    db.session.merge(cart_item)
+            db.session.commit()
+            return {'success': True, 'message': '购物车商品选中状态更新成功。'}
+        except Exception as e:
+            # 打印异常信息，记录错误，或使用应用的日志系统
+            print(e)
+            db.session.rollback()
+            return {'success': False, 'message': '更新过程中发生错误。'}
+
+

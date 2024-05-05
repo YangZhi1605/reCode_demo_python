@@ -113,3 +113,19 @@ def search_node_store():
     results = [result.to_dict() for result in results]
     # 返回JSON数据
     return jsonify(results)
+
+# 编写根据id获取数据的接口
+@api_admin_node_store_manage.route('/api/get_info_by_id',methods=['GET'])
+def get_info_by_id():
+    '''
+        根据id获取数据
+    Returns:
+    '''
+    # 获取请求的数据
+    id = int(request.args.get('id'))
+    # 调用service_node_store的get_info_by_id方法，根据id获取数据
+    result = service_node_store.get_info_by_id(id)
+    # 对象转换为字典
+    # result = result.to_dict()
+    # 返回JSON数据
+    return jsonify(result)

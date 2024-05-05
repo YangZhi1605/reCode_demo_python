@@ -215,13 +215,13 @@ class ServiceMachineLearn_RF:
         # 超参数处理搜一个合适的+交叉验证
         # 设置参数
         param_grid = {
-            'n_estimators': [50, 100, 200],
+            'n_estimators': [5, 50, 100, 150,200],
             'max_depth': [5, 10, 15],
             'min_samples_split': [2, 5, 10],
             'min_samples_leaf': [1, 2, 4]
         }
         # 确定交叉验证的次数
-        cv = 5
+        cv = 3
         # 创建GridSearchCV对象
         grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, cv=cv, n_jobs=-1)
         # 训练模型
@@ -253,7 +253,7 @@ class ServiceMachineLearn_RF:
         return best_estimator, accuracy, best_score, le
 
     # 保存 随机森林的LabelEncoder
-    def save_label_encoder_rf(self, le, filename='label_encoder_rf.pkl'):
+    def save_label_encoder_rf(self, le, filename='label_encoder_rf_cv3.pkl'):
         model_directory = os.path.join('BackSupport', 'resource', 'machine_learn_model_save')
         if not os.path.exists(model_directory):
             os.makedirs(model_directory)
@@ -282,7 +282,7 @@ class ServiceMachineLearn_RF:
         return le.inverse_transform(y_pred)
 
     # 保存训练出来的模型
-    def save_model_rf(self, model, filename='model_rf.pkl'):
+    def save_model_rf(self, model, filename='model_rf_cv3.pkl'):
         # 设置模型保存的目录
         model_directory = os.path.join('BackSupport', 'resource', 'machine_learn_model_save')
         # 检查目录是否存在，如果不存在则创建
@@ -375,12 +375,12 @@ class ServiceMachineLearn_SVM:
         # 超参数处理搜一个合适的+交叉验证
         # 设置参数
         param_grid = {
-            'C':[0.001, 0.01, 0.5, 5, 20,50,500],
+            'C':[0.001, 0.01, 0.5],
             'gamma': ['scale', 'auto'],
             'kernel': ['linear', 'rbf', 'poly']
         }
         # 确定交叉验证的次数
-        cv = 4
+        cv = 5
         # 创建GridSearchCV对象
         grid_search = GridSearchCV(estimator=svm, param_grid=param_grid, cv=cv, n_jobs=-1)
         # 训练模型
@@ -411,7 +411,7 @@ class ServiceMachineLearn_SVM:
         return best_estimator, accuracy, best_score,le
 
     # 保存 SVM的LabelEncoder
-    def save_label_encoder_svm(self, le, filename='label_encoder_svm_cv4.pkl'):
+    def save_label_encoder_svm(self, le, filename='label_encoder_svm_cv5.pkl'):
         model_directory = os.path.join('BackSupport', 'resource', 'machine_learn_model_save')
         if not os.path.exists(model_directory):
             os.makedirs(model_directory)
@@ -438,7 +438,7 @@ class ServiceMachineLearn_SVM:
     def inverse_transform_labels(self, le, y_pred):
         return le.inverse_transform(y_pred)
     # 保存训练出来的模型
-    def save_model_svm(self, model, filename='model_svm_cv4.pkl'):
+    def save_model_svm(self, model, filename='model_svm_cv5.pkl'):
         # 设置模型保存的目录
         model_directory = os.path.join('BackSupport', 'resource', 'machine_learn_model_save')
         # 检查目录是否存在，如果不存在则创建

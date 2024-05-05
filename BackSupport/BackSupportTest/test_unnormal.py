@@ -1,5 +1,5 @@
 from BackSupport import create_app
-from BackSupport.model_logic.TotalModel import db, Device, Device_Circuit_Weight, DeviceAnalysis,FrontUserInfoTable,DeviceNodeStore  # 确保导入Device模型
+from BackSupport.model_logic.TotalModel import db, Device, Device_Circuit_Weight, DeviceAnalysis,FrontUserInfoTable,DeviceNodeStore,Cart  # 确保导入Device模型
 from BackSupport.service_logic.service_front_user_info import ServiceFrontUserInfo
 from BackSupport.service_logic.service_machine_learn import ServiceMachineLearn_KNN
 from BackSupport.utils.dbutils import read_data_from_database
@@ -181,6 +181,21 @@ def test_get_device():
             result = result.to_dict()
             print(result)
 
+# 测试根据id获取
+def test_get_info_by_id():
+    app = create_app()
+    with app.app_context():
+        result = DeviceNodeStore.get_info_by_id(1)
+        print(result)
+# 测试购物车的获取所有数据
+def test_get_cart():
+    app = create_app()
+    with app.app_context():
+        results = Cart.get_all()
+        for result in results:
+            result = result.to_dict()
+            print(result)
+
 # 然后在你想打印变量的时候调用这个函数
 if __name__ == '__main__':
     # print_odd_voltages()
@@ -200,4 +215,6 @@ if __name__ == '__main__':
     # test_get_all()
     # test_get_data()
     # test_get_front_user_info()
-    test_get_device()
+    # test_get_device()
+    # test_get_info_by_id()
+    test_get_cart()

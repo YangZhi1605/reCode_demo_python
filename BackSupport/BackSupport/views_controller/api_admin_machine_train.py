@@ -119,7 +119,7 @@ def train_model_RF():
         ModelPath = service_machine_learn_rf.save_model_rf(rf_model_best, filename='model_rf.pkl') # 模型保存成功
         # 编写一个data字典，存储模型名称ModelName,创建者CreateUser,模型路径ModelPath,是否启用IsUse。调用service_machine_learn的add_info方法，将data字典传入
         data = {
-            'ModelName': 'RandomForest',
+            'ModelName': 'RandomForest_cv3',
             'CreateUser': 'Admin-yangzhi',
             'ModelPath': ModelPath,
             'IsUse': 0,
@@ -159,7 +159,7 @@ def train_model_SVM():
         ModelPath = service_machine_learn_svm.save_model_svm(svm_model_best, filename='model_svm_cv4.pkl') # 模型保存成功
         # 编写一个data字典，存储模型名称ModelName,创建者CreateUser,模型路径ModelPath,是否启用IsUse。调用service_machine_learn的add_info方法，将data字典传入
         data = {
-            'ModelName': 'SVM模型cv4',
+            'ModelName': 'SVM模型cv5',
             'CreateUser': 'Admin-yangzhi',
             'ModelPath': ModelPath,
             'IsUse': 0,

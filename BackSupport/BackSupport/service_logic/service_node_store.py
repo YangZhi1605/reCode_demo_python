@@ -23,3 +23,7 @@ class ServiceNodeStore:
     # 配合SQLAlchemy的DeviceNodeStore模型中的search_info类方法，实现根据条件查询数据的功能
     def search_info(self, data):
         return self.data_dao.search_info(data)
+
+    # 配合SQLAlchemy的DeviceNodeStore模型中的get_info_by_id类方法，实现根据id获取数据的功能
+    def get_info_by_id(self, id):
+        return self.data_dao.get_info_by_id(id)

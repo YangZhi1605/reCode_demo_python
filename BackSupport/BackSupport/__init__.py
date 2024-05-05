@@ -10,6 +10,7 @@ from .views_controller import api_admin_adminUser
 from .views_controller import api_admin_machine_train
 from .views_controller import api_data_op_userinfo_manage
 from .views_controller import api_admin_node_store_manage
+from .views_controller import api_data_op_cart
 # 导入的config包下的setting模块中的Config类
 from .config.setting import Config
 # 导入model_logic包下的VoltageModle模块中的db对象,即SQLAlchemy对象是需要在__init__.py中导入并初始化的
@@ -40,6 +41,7 @@ def create_app():
     app.register_blueprint(api_admin_machine_train.api_admin_machine_train)
     app.register_blueprint(api_data_op_userinfo_manage.api_data_op_userinfo_manage)
     app.register_blueprint(api_admin_node_store_manage.api_admin_node_store_manage)
+    app.register_blueprint(api_data_op_cart.api_data_op_cart)
 
     # 初始化邮件发送对象
     mail = Mail(app)
