@@ -11,7 +11,7 @@
  Target Server Version : 80028
  File Encoding         : 65001
 
- Date: 05/05/2024 09:54:01
+ Date: 06/05/2024 20:58:10
 */
 
 SET NAMES utf8mb4;
@@ -28,7 +28,8 @@ CREATE TABLE `cart`  (
   `price` float(10, 2) NULL DEFAULT NULL,
   `cartTotalQuantity` int(0) NULL DEFAULT NULL COMMENT '购物车中零件商品的数量',
   `total` float(10, 2) NULL DEFAULT NULL,
+  `active` tinyint(1) NULL DEFAULT 1,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 SET FOREIGN_KEY_CHECKS = 1;

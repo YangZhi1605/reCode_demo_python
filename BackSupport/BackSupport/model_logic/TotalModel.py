@@ -1,9 +1,10 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import or_, Text
+from sqlalchemy import or_, Text, ForeignKey, Boolean
 from sqlalchemy import cast, String
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Float, DateTime
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import relationship
 
 db = SQLAlchemy()
 
@@ -951,6 +952,7 @@ CREATE TABLE `cart`  (
   `price` float(10, 2) NULL DEFAULT NULL,
   `cartTotalQuantity` int(0) NULL DEFAULT NULL COMMENT '购物车中零件商品的数量',
   `total` float(10, 2) NULL DEFAULT NULL,
+  `active` tinyint(1) NULL DEFAULT 1,
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
@@ -965,6 +967,7 @@ class Cart(db.Model):
     price = Column(Float)
     cartTotalQuantity = Column(Integer)
     total = Column(Float)
+    active = Column(Boolean, default=True)
 
     # 编写获取数据表中所有数据的类方法
     @classmethod
@@ -1006,6 +1009,8 @@ class Cart(db.Model):
                 # 前台传递的是quantity
                 device.cartTotalQuantity += data['quantity']
                 device.total += data['total']
+                # 是否显示
+                device.active = True
                 db.session.merge(device)
                 db.session.commit()
                 return {'success': True, 'message': '购物车商品添加成功。'}
@@ -1016,6 +1021,8 @@ class Cart(db.Model):
                     price=data['price'],
                     cartTotalQuantity=data['quantity'],
                     total=data['total']
+                    # 是否展示
+                    # active=True
                 )
                 db.session.add(new_device)
                 db.session.commit()
@@ -1064,4 +1071,231 @@ class Cart(db.Model):
             db.session.rollback()
             return {'success': False, 'message': '更新过程中发生错误。'}
 
+    # 编写根据前台传递的购物车对象中的id行将active字段置为False，从而清空相应购物车信息的类方法
+    @classmethod
+    def deactivateCartItems(cls, cartIds):
+        try:
+            Cart.query.filter(Cart.id.in_(cartIds)).update({Cart.active: False}, synchronize_session=False)
+            db.session.commit()
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            print(f'An error occurred while deactivating items in the cart: {e}')
+            return False
+        return True
+
+
+
+'''
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for cart_address
+-- ----------------------------
+DROP TABLE IF EXISTS `cart_address`;
+CREATE TABLE `cart_address`  (
+  `id` int(0) NOT NULL AUTO_INCREMENT,
+  `isUse` int(0) NULL DEFAULT NULL COMMENT '是否启用',
+  `receiverName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '收货者姓名',
+  `receiverMobile` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '收货人电话',
+  `receiverProvince` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '省',
+  `receiverCity` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '城市',
+  `receiverDistrict` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '街区',
+  `receiverAddress` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '具体几号',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+'''
+# 我当前的数据表如上，创建一个对应的模型,负责存储购物车地址信息
+class CartAddress(db.Model):
+    __tablename__ = 'cart_address'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    isUse = Column(Integer)
+    receiverName = Column(String(255))
+    receiverMobile = Column(String(255))
+    receiverProvince = Column(String(255))
+    receiverCity = Column(String(255))
+    receiverDistrict = Column(String(255))
+    receiverAddress = Column(String(255))
+
+    # 编写获取数据表中所有数据的类方法
+    @classmethod
+    def get_all(cls):
+        return cls.query.all()
+
+    # 将对象信息转换为字典
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+    # 根据传入的id删除信息的类方法
+    @classmethod
+    def delete_info(cls, id):
+        try:
+            device = cls.query.get(id)
+            if device is None:  # 检查是否找到了要删除的对象
+                return {'success': False, 'message': '对象不存在。'}
+            db.session.delete(device)
+            db.session.commit()
+            return {'success': True, 'message': '对象删除成功。'}
+        except Exception as e:
+            # 在这里你可以记录异常信息，比如：print(e) 或者使用应用的日志系统
+            return {'success': False, 'message': '删除过程中发生错误。'}
+
+    # 根据前台传递的address进行模糊查询的类方法
+    @classmethod
+    def search_info(cls, search_str):
+        return cls.query.filter(cls.address.like(f'%{search_str}%')).all()
+
+    # 根据前台传递的信息进行添加的类方法
+    @classmethod
+    def add_info(cls, data):
+        try:
+            new_device = cls(
+                receiverName=data['receiverName'],
+                receiverMobile=data['receiverMobile'],
+                receiverProvince=data['receiverProvince'],
+                receiverCity=data['receiverCity'],
+                receiverDistrict=data['receiverDistrict'],
+                receiverAddress=data['receiverAddress'],
+                isUse=data['isUse']
+            )
+            db.session.add(new_device)
+            db.session.commit()
+            return {'success': True, 'message': '购物车地址添加成功。'}
+        except Exception as e:
+            # 在这里你可以记录异常信息，比如：print(e) 或者使用应用的日志系统
+            print(e)  # 将异常信息打印出来
+            db.session.rollback()
+            return {'success': False, 'message': '添加过程中发生错误。'}
+
+    # 根据前台传递的ID和数据对象，更新数据库中
+    @classmethod
+    def update_info(cls, id, data):
+        try:
+            device = cls.query.get(id)
+            device.receiverName = data['receiverName']
+            device.receiverMobile = data['receiverMobile']
+            device.receiverProvince = data['receiverProvince']
+            device.receiverCity = data['receiverCity']
+            device.receiverDistrict = data['receiverDistrict']
+            device.receiverAddress = data['receiverAddress']
+            device.isUse = data['isUse']
+            db.session.merge(device)
+            db.session.commit()
+            return {'success': True, 'message': '收货地址更新成功。'}
+        except Exception as e:
+            # 在这里你可以记录异常信息，比如：print(e) 或者使用应用的日志系统
+            print(e)
+            db.session.rollback()
+            return {'success': False, 'message': '更新过程中发生错误。'}
+
+    # 根据传入id更新isUse字段
+    @classmethod
+    def update_isUse(cls, id,data):
+        try:
+            device = cls.query.get(id)
+            device.isUse = data['isUse'],
+            db.session.merge(device)
+            db.session.commit()
+            return {'success': True, 'message': '收货地址更新成功。'}
+        except Exception as e:
+            print(e)
+            db.session.rollback()
+            return {'success': False, 'message': '更新过程中发生错误。'}
+
+'''
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS `order`;
+CREATE TABLE `order`  (
+  `id` int(0) NOT NULL AUTO_INCREMENT,
+  `order_total` float(10, 2) NULL DEFAULT NULL COMMENT '订单总价',
+  `order_item_quantity` int(0) NULL DEFAULT NULL COMMENT '订单中商品的总数量',
+  `user_id` int(0) NULL DEFAULT NULL COMMENT '用户ID',
+  `cart_id` int(0) NULL DEFAULT NULL COMMENT '购物车ID',
+  `address_id` int(0) NULL DEFAULT NULL COMMENT '地址ID',
+  PRIMARY KEY (`id`) USING BTREE,
+  FOREIGN KEY (`user_id`) REFERENCES `front_userinfo_table` (`id`),
+  FOREIGN KEY (`cart_id`) REFERENCES `cart` (`id`),
+  FOREIGN KEY (`address_id`) REFERENCES `cart_address` (`id`)
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+SET FOREIGN_KEY_CHECKS = 1;
+'''
+# 创建订单表对应的模型
+# 表 Order，来记录订单信息。这个 Order 表格可以通过外键与 front_userinfo_table 用户信息表，cart 购物车表，以及 cart_address 地址信息表链接
+class Order(db.Model):
+    __tablename__ = 'order'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    order_total = Column(Float)
+    order_item_quantity = Column(Integer)
+    user_id = Column(Integer, ForeignKey('front_userinfo_table.id'))
+    user = relationship('FrontUserInfoTable')
+    cart_id = Column(Integer, ForeignKey('cart.id'))
+    cart = relationship('Cart')
+    address_id = Column(Integer, ForeignKey('cart_address.id'))
+    address = relationship('CartAddress')
+
+    # 编写获取数据表中所有数据的类方法
+    @classmethod
+    def get_all(cls):
+        return cls.query.all()
+    # 将对象信息转换为字典
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+    # 编写直接将传入的id字段用来创建新的订单的类方法
+    @classmethod
+    def createOrder(cls, data):
+        # 从传入的数据中提取用户id、地址id、购物车id列表
+        userId = data['userInfo']['id']
+        addressId = data['addressInfo']['id']
+        cartIds = [item['id'] for item in data['cartList']]
+
+        # 确保所有的id都有效
+        user = FrontUserInfoTable.query.get(userId)
+        address = CartAddress.query.get(addressId)
+        carts = Cart.query.filter(Cart.id.in_(cartIds)).all()
+
+        # 对于每个购物车中的商品，创建一个新的订单
+        for cart in carts:
+            new_order = Order()
+            new_order.user_id = user.id
+            new_order.cart_id = cart.id
+            new_order.address_id = address.id
+            new_order.order_total = cart.total
+            new_order.order_item_quantity = cart.cartTotalQuantity
+
+            db.session.add(new_order)
+
+        db.session.commit()
+
+    # 编写获取订单详情的类方法
+    # self.user、self.address和self.cart是 Order 类关联到的 User，CartAddress 和 Cart 实体。
+    # 通过这些关联，可以直接访问相关实体的属性，如 self.user.username, self.address.receiverName 等
+    # 可以直接通过类名以及订单的id来获取订单详情，比如 Order.get_order_details(order_id)
+    @classmethod
+    def get_all_orders_details(cls):
+        orders = cls.query.all()
+        results = []
+        for order in orders:
+            result = {
+                'user_name': order.user.username,
+                'address': {
+                    'receiverName': order.address.receiverName,
+                    'receiverMobile': order.address.receiverMobile,
+                    'receiverProvince': order.address.receiverProvince,
+                    'receiverCity': order.address.receiverCity,
+                    'receiverDistrict': order.address.receiverDistrict,
+                    'receiverAddress': order.address.receiverAddress,
+                },
+                'product': {
+                    'name': order.cart.name,
+                    'price': order.cart.price,
+                    'quantity': order.cart.cartTotalQuantity,
+                },
+                'total_cost': order.order_total,
+            }
+            results.append(result)
+        return results
 
