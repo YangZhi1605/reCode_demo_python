@@ -6,7 +6,7 @@
 '''
 import pandas as pd
 from sklearn import metrics
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
@@ -375,8 +375,10 @@ class ServiceMachineLearn_SVM:
         # 超参数处理搜一个合适的+交叉验证
         # 设置参数
         param_grid = {
+            # C是惩罚系数，其越大，拟合程度可能越大，gamma是核函数的系数
             'C':[0.001, 0.01, 0.5],
             'gamma': ['scale', 'auto'],
+            # kernel： 核函数类型，常见的有'linear'（线性）,'poly'（多项式）,'rbf'（径向基函数）
             'kernel': ['linear', 'rbf', 'poly']
         }
         # 确定交叉验证的次数
@@ -471,4 +473,54 @@ class ServiceMachineLearn_SVM:
         # 打印预测结果
         print(f"Predictions: {predictions}")
         return predictions
+
+
+# 负责处理将不同传统机器学习的基学习器通过VotingClassifier进行集成学习
+class ServiceMachineLearn_ensemble:
+    def __init__(self, data_dao):
+        self.data_dao = data_dao
+
+    # 从数据库中获取数据
+    def get_data_ensemble(self):
+        '''
+        从数据库中获取数据并转换为DataFrame
+        Returns:
+            data: DataFrame
+        '''
+        # 获取所有数据
+        data = self.data_dao.get_all()
+        # 将数据转换为DataFrame , 直接将字典列表转换为DataFrame
+        data = pd.DataFrame([result.to_dict() for result in data])
+        return data
+
+    # 进行模型的集成
+    def create_ensemble_models(self):
+        # 加载模型
+        model_knn = joblib.load('machine_learn_model_save/model_knn.pkl')
+        model_rf = joblib.load('machine_learn_model_save/model_rf.pkl')
+        model_svm = joblib.load('machine_learn_model_save/model_svm.pkl')
+
+        # 加载所有模型信息为一个列表
+        models_list = [('knn', model_knn), ('rf', model_rf), ('svm', model_svm)]
+
+
+        # 创建VotingClassifier
+        voting_clf = VotingClassifier(estimators=models_list,voting='hard')
+
+        return voting_clf
+
+    # 保存集成学习模型
+    def save_model_ensemble(self, model, filename='model_ensemble.pkl'):
+        # 设置模型保存的目录
+        model_directory = os.path.join('machine_learn_model_save')
+        # 检查目录是否存在，如果不存在则创建
+        if not os.path.exists(model_directory):
+            os.makedirs(model_directory)
+        # 创建模型文件的完整路径
+        file_path = os.path.join(model_directory, filename)
+        # 保存模型到指定目录
+        joblib.dump(model, file_path)
+        print(f"集成学习模型已经被保存到 {file_path}")
+        # 返回模型保存的路径
+        return file_path
 

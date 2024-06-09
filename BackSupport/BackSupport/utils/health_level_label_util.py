@@ -1,5 +1,6 @@
 from BackSupport.utils.dbutils import read_data_from_database
 from BackSupport.utils.sqlhelper import SqlHelper
+from collections import Counter
 
 
 # 计算传递进去的输入电压和输出电压的电压比率
@@ -68,6 +69,7 @@ def cal_all_voltage_ratios(data, data_weight):
 
 # 测试
 # print('加权后的电压比率为：',cal_all_voltage_ratios('device_analysis', 'device_circuit_weight'))
+
 
 
 # 调用函数中计算每行数据中电压比率*权重后的结果进行最后的加权平均数计算，根据计算结果进行健康等级的划分
@@ -147,5 +149,23 @@ def save_health_level_to_database():
     finally:
         # 最后不管有没有异常都要关闭连接
         db.close(conn, cursor)
+
+# 使用Python的collections模块中的Counter函数
+
+
+
+def count_labels(predictions_labels):
+    # 使用Counter来计算每个标签的数量
+    label_counts = Counter(predictions_labels)
+    # 获取数量最多的两种标签
+    most_common_labels = label_counts.most_common(2)
+    # 返回最多的两个标签及其数量
+    return most_common_labels
+
+
+# label_counts, most_common_labels = count_labels(predictions_labels)
+#
+# print("所有类别中的数量分布：", label_counts)
+# print("数量最多的两种标签：", most_common_labels)
 
 save_health_level_to_database()

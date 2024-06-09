@@ -7,7 +7,7 @@ from BackSupport.model_logic.TotalModel import DeviceNode_MaintainInfo
 import os
 from datetime import datetime  # 从datetime模块导入datetime类
 
-from BackSupport.utils.wrben2_utils import report_all
+from BackSupport.utils.wrben2_utils import report_all, report_dynamic_bar
 
 # 创建蓝图
 api_data_op_maintaininfo = Blueprint('api_data_op_maintaininfo', __name__)
@@ -101,6 +101,9 @@ def add_info():
 def create_logInfo():
     # 调用综合性评判结果函数
     report_total = report_all()
+    # 从请求参数中获取username
+    username = request.args.get('username')
+
     # 获取当前时间，并将其格式化为MySQL认可的格式
     # 问题在于你尝试从 datetime 模块直接调用 now() 方法，但在 datetime 模块里没有 now() 这个函数，它实际上是 datetime 类的一个方法。要正确地使用 now() 方法，你需要从 datetime 模块中导入 datetime 类
     current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -109,8 +112,10 @@ def create_logInfo():
         'MaintenanceDate': current_time,# 调用此函数的时间
         'MaintenanceRport':report_total,
         # 严格而言，这里的MaintenanceUser应该是从前台传递当前登录用户的用户名
-        'MaintenanceUser':'yangzhi',
+        'MaintenanceUser':username,
         'MaintenanceTage':'未处理',
     }
     # 将上述字典按照JSON返回
     return jsonify(log_info)
+
+

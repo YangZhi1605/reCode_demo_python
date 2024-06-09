@@ -24,6 +24,15 @@ class ServiceMachine:
     def search_info(self, search_str: str):
         return self.data_dao.search_info(search_str)
 
+    # 配合SQLAlchemy的ModelStorage模型中的get_all_score类方法，实现获取所有模型评分的功能
+    def get_all_score(self):
+        return self.data_dao.get_all_score()
+    # 配合SQLAlchemy的ModelStorage模型中的get_score_list类方法，将模型评分数据转换为列表的功能
+    def get_score_list(self):
+        return self.data_dao.get_score_list()
+
+
+
 # 服务于管理员登录和注册，以及后面信息展示的服务类
 class ServiceAdmin:
     def __init__(self, data_dao):

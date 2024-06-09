@@ -4,6 +4,11 @@ import json
 from flask_cors import CORS
 from BackSupport.utils.wrben2_utils import cal_weight_voltage_result_radom, get_top_five_values, format_terminal_data, \
     single_count_dict_in_list, get_output_voltages, cal_statistics, standardize_statistics_func
+from BackSupport.service_logic.service_machine import ServiceMachine
+from BackSupport.model_logic.TotalModel import ModelStorage
+
+# 挂载dao到service
+service_machine = ServiceMachine(ModelStorage())
 
 # 创建蓝图
 api_data_op_wrben2 = Blueprint('api_data_op_wrben2', __name__)
@@ -56,3 +61,11 @@ def graph_stack():
     standardized_statistics = standardize_statistics_func(statistics)
     # 返回数据,以json格式传递给前端
     return jsonify(standardized_statistics)
+
+# 编写获取当前模型的评分的路由，结果返回给前端
+@api_data_op_wrben2.route('/api/get_all_score_list', methods=['GET'])
+def get_all_score():
+    # 调用service_machine中的get_all_score方法获取所有模型评分
+    all_score = service_machine.get_score_list()
+    # 返回数据,以json格式传递给前端
+    return jsonify(all_score)

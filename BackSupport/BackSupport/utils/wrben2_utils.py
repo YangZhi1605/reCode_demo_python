@@ -302,7 +302,7 @@ def format_terminal_data(count_diffs_dict_in_list):
         # 根据格式构建新的字典，并加入到列表中
         formatted_data.append({
             'value': count,
-            'name': f'Terminal-{i+1}'
+            'name': f'电池接线柱-{i+1}'
         })
     return formatted_data
 
@@ -474,12 +474,12 @@ def report_statistics(statistics):
 
 ############## 大多数服务于动态柱状图函数 ################
 def report_dynamic_bar():
-    report = "动态柱状图的评测结果不错。"
+    report = "5号电路支路和2号电路支路出现的警报频率较高，建议检修"
     return report
 
 ############## 大多数服务于仪表盘评分函数 ################
 def report_grade():
-    report = "仪表盘评分的评测结果不错。"
+    report = "当前模型评分良好，请相信我们"
     return report
 
 # 调用以上五种report_函数，综合每个函数的返回值，给出一个综合评判

@@ -152,6 +152,39 @@ class Device_Upload(db.Model):
     def __repr__(self):
         return f"<Device(ID={self.ID}, DeviceName={self.DeviceName}, UserID={self.UserID}, CollectTime={self.CollectTime})>"
 
+    # 将对象信息转换为字典
+    def to_dict(self):
+        return {
+            'ID': self.ID,
+            'InfoType': self.InfoType,
+            'DeviceNodeID': self.DeviceNodeID,
+            'DeviceName': self.DeviceName,
+            'UserID': self.UserID,
+            'CollectTime': self.CollectTime,
+            'Voltage1': self.Voltage1,
+            'Voltage2': self.Voltage2,
+            'Voltage3': self.Voltage3,
+            'Voltage4': self.Voltage4,
+            'Voltage5': self.Voltage5,
+            'Voltage6': self.Voltage6,
+            'Voltage7': self.Voltage7,
+            'Voltage8': self.Voltage8,
+            'Voltage9': self.Voltage9,
+            'Voltage10': self.Voltage10,
+            'Voltage11': self.Voltage11,
+            'Voltage12': self.Voltage12,
+            'Voltage13': self.Voltage13,
+            'Voltage14': self.Voltage14,
+            'Voltage15': self.Voltage15,
+            'Voltage16': self.Voltage16
+        }
+
+    # 获取所有数据的类方法
+    @classmethod
+    def get_all(cls):
+        return cls.query.all()
+
+
     # 根据传入id删除信息的类方法
     @classmethod
     def delete_info(cls, id):
@@ -521,6 +554,18 @@ class ModelStorage(db.Model):
         )
         db.session.add(new_model)
         db.session.commit()
+
+    # 获取所有ModelScore的类方法
+    @classmethod
+    def get_all_score(cls):
+        return cls.query.with_entities(cls.ModelScore).all()
+
+    # 将获取的ModelScore转换为列表的类方法
+    @classmethod
+    def get_score_list(cls):
+        return [score[0] for score in cls.get_all_score()]
+
+
 
 
 '''
@@ -1083,6 +1128,11 @@ class Cart(db.Model):
             return False
         return True
 
+    # 编写根据前台传递的id行将active字段置为false,从而清空相应购物车信息的类方法
+    # @classmethod
+    # def deactivateCartItem(cls, id):
+
+
 
 
 '''
@@ -1206,6 +1256,9 @@ class CartAddress(db.Model):
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
+-- ----------------------------
+-- Table structure for order
+-- ----------------------------
 DROP TABLE IF EXISTS `order`;
 CREATE TABLE `order`  (
   `id` int(0) NOT NULL AUTO_INCREMENT,
@@ -1214,11 +1267,18 @@ CREATE TABLE `order`  (
   `user_id` int(0) NULL DEFAULT NULL COMMENT '用户ID',
   `cart_id` int(0) NULL DEFAULT NULL COMMENT '购物车ID',
   `address_id` int(0) NULL DEFAULT NULL COMMENT '地址ID',
+  `orderNumber` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '订单编号',
+  `tradeType` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '交易类型',
+  `orderStatus` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '订单状态',
+  `createTime` datetime(0) NULL DEFAULT NULL COMMENT '订单创建时间',
   PRIMARY KEY (`id`) USING BTREE,
-  FOREIGN KEY (`user_id`) REFERENCES `front_userinfo_table` (`id`),
-  FOREIGN KEY (`cart_id`) REFERENCES `cart` (`id`),
-  FOREIGN KEY (`address_id`) REFERENCES `cart_address` (`id`)
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+  INDEX `user_id`(`user_id`) USING BTREE,
+  INDEX `cart_id`(`cart_id`) USING BTREE,
+  INDEX `address_id`(`address_id`) USING BTREE,
+  CONSTRAINT `order_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `front_userinfo_table` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `order_ibfk_2` FOREIGN KEY (`cart_id`) REFERENCES `cart` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `order_ibfk_3` FOREIGN KEY (`address_id`) REFERENCES `cart_address` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 12 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 SET FOREIGN_KEY_CHECKS = 1;
 '''
@@ -1235,6 +1295,11 @@ class Order(db.Model):
     cart = relationship('Cart')
     address_id = Column(Integer, ForeignKey('cart_address.id'))
     address = relationship('CartAddress')
+    orderNumber = Column(String(255))
+    tradeType = Column(String(255))
+    orderStatus = Column(String(255))
+    createTime = Column(DateTime)
+
 
     # 编写获取数据表中所有数据的类方法
     @classmethod

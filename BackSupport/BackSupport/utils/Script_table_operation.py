@@ -14,14 +14,14 @@ cursor = db.cursor()
 # 向指定的数据表格中，插入伪造数据
 def def_insert_data():
     # 定义要插入数据的数量
-    num_rows = 520
+    num_rows = 1200
     # 生成并插入随机数据
     for i in range(num_rows):
         info_type = 1
-        device_node_id = 'node3'
+        device_node_id = 'node4'
         device_name = '蓄电池'
-        user_id = '5957'
-        collect_time = '2023-08-06 08:31'
+        user_id = '1004'
+        collect_time = '2023-10-11 11:53'
 
         # # 生成随机值——原版
         # voltage_values = []
@@ -54,7 +54,6 @@ def def_insert_data():
             # 每当j是奇数时，生成一个输入电流的随机值存储在input_voltage变量中。接下来的偶数迭代会使用这个input_voltage的值作为uniform函数的下限参数
             voltage = round(output_voltage if j % 2 == 0 else input_voltage, 2)
             voltage_values.append(voltage)
-
         # 输出voltage_values列表将包含交替的"表征输入电流"和"表征输出电流"的值，输出电流值大于对应的输入电流值且小于500
 
 
@@ -118,8 +117,8 @@ def def_insert_data_and_health():
     db.close()
 
 # 调用函数
-# def_insert_data()
-def_insert_data_and_health()
+def_insert_data()
+# def_insert_data_and_health()
 
 
 

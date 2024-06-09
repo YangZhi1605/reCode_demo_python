@@ -6,7 +6,7 @@ from flask import current_app
 由于在 create_app 函数内部初始化了 mail 对象，我们可以通过 Flask 的应用上下文来访问它
 然后，修改你的 send_mail 函数，让它使用 current_app 来获取 Mail 实例并发送邮件
 '''
-from flask_mail import Message
+from flask_mail import gong
 
 def send_mail(subject, body, recipients):
     msg = Message(subject, recipients=recipients, body=body)
